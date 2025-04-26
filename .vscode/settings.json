@@ -1,0 +1,22 @@
+{
+    "C_Cpp.intelliSenseEngine": "default",
+    "idf.espIdfPathWin": "C:\\Users\\coran\\esp\\v5.3.1\\esp-idf",
+    "idf.toolsPathWin": "C:\\Users\\coran\\.espressif",
+    "idf.openOcdConfigs": [
+        "board/esp32c6-bridge.cfg"
+    ],
+    "idf.portWin": "COM11",
+    "idf.flashType": "UART",
+    "files.associations": {
+        "*.embeddedhtml": "html",
+        "**/project.sigasi": "jsonc",
+        "**/.sigasi/**/compilation.log": "shellscript",
+        "**/.sigasi/**/compilation.plan": "json",
+        "esp_timer.h": "c",
+        "esp_log.h": "c",
+        "i2c.h": "c",
+        "vl53l0x.h": "c",
+        "string.h": "c",
+        "stdint.h": "c"
+    }
+}
