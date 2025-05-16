@@ -28,11 +28,27 @@ void app_main() {
     vl53l0x_init(sensor); // Initialisation de la bibliothèque VL53L0X
     
     printf("Initialisation i2C ok\n");
+    vl53l0x_startContinuous(sensor, 0); // 0 pour un mode continu sans délai entre les mesures
+    ESP_LOGI(TAG, "Mode continu démarré");
+
     while (1) {
-        uint16_t distance = vl53l0x_readRangeSingleMillimeters(sensor); // Lecture de la distance
-        ESP_LOGI(TAG, "Distance mesurée: %d mm", distance);
-        vTaskDelay(pdMS_TO_TICKS(500)); // Délai de 500 ms entre les lectures
+        // uint16_t distance = vl53l0x_readRangeSingleMillimeters(sensor); // Lecture de la distance
+        // ESP_LOGI(TAG, "Distance mesurée: %d mm", distance);
+        // vTaskDelay(pdMS_TO_TICKS(500)); // Délai de 500 ms entre les lectures
+
+         // Lecture de la distance en mode continu
+         uint16_t distance = vl53l0x_readRangeContinuousMillimeters(sensor);
+         if (vl53l0x_timeoutOccurred(sensor)) {
+             ESP_LOGE(TAG, "Erreur : Timeout lors de la lecture de la distance");
+         } else {
+             ESP_LOGI(TAG, "Distance mesurée : %d mm", distance);
+         }
+ 
+         vTaskDelay(pdMS_TO_TICKS(500));
     }
+
+    vl53l0x_stopContinuous(sensor);
+    vl53l0x_end(sensor);
     
     
   
