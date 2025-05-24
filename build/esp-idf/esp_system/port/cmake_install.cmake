@@ -39,6 +39,6 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/Users/coran/OneDrive/Documents/Projets/i2c_tools/build/esp-idf/esp_system/port/soc/esp32c6/cmake_install.cmake")
+  include("C:/Users/coran/SynologyDrive/Projet/i2c_tools/build/esp-idf/esp_system/port/soc/esp32c6/cmake_install.cmake")
 endif()
 

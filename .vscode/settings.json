@@ -17,6 +17,7 @@
         "i2c.h": "c",
         "vl53l0x.h": "c",
         "string.h": "c",
-        "stdint.h": "c"
+        "stdint.h": "c",
+        "task.h": "c"
     }
 }

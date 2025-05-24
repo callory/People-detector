@@ -1,9 +1,14 @@
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
+#include "freertos/FreeRTOSConfig.h"
+
 #include "freertos/task.h"
 #include "driver/i2c.h"
+
+
 #include "esp_log.h"
 #include "vl53l1x.h"
+
 
 #define I2C_MASTER_SCL_IO 20    // GPIO pour SCL
 #define I2C_MASTER_SDA_IO 19    // GPIO pour SDA
@@ -14,7 +19,9 @@
 #define VL53L0X_REG_RESULT 0x14 // Registre de lecture des données
 #define VL53L0X_REG_START 0x00  // Registre de démarrage du capteur
 
-static const char *TAG = "VL53L0X";
+static const char *TAG = "VL53L1X";
+
+
 
 
 
@@ -46,7 +53,8 @@ void app_main() {
              //ESP_LOGI(TAG, "Distance mesurée : %d mm", distance);
          }
  
-         vTaskDelay(pdMS_TO_TICKS(1000));
+         vTaskDelay(pdMS_TO_TICKS(1000)); // Délai de 500 ms entre les lectures
+         
     }
 
     vl53l1x_stopContinuous(sensor);
