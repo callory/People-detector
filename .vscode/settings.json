@@ -18,6 +18,8 @@
         "vl53l0x.h": "c",
         "string.h": "c",
         "stdint.h": "c",
-        "task.h": "c"
+        "task.h": "c",
+        "esp_pm.h": "c",
+        "esp_ieee802154.h": "c"
     }
 }

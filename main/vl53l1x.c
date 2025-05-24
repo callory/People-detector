@@ -1631,6 +1631,7 @@ const char *vl53l1x_init(vl53l1x_t * v)
    // check model ID and module type registers (values specified in datasheet)
    if (vl53l1x_readReg16Bit(v, IDENTIFICATION__MODEL_ID) != 0xEACC)
    {
+      printf("Not VL53L1X");
       return "Not VL53L1X";
    }
 
@@ -1653,6 +1654,7 @@ const char *vl53l1x_init(vl53l1x_t * v)
       if (vl53l1x_checkTimeoutExpired(v))
       {
          v->did_timeout = true;
+         printf("VL53L1X: Timeout waiting for boot completion\n");
          return "Timeout";
       }
    }
@@ -1745,7 +1747,7 @@ const char *vl53l1x_init(vl53l1x_t * v)
    // the API triggers this change in VL53L1_init_and_start_range() once a
    // measurement is started; assumes MM1 and MM2 are disabled
    vl53l1x_writeReg16Bit(v, ALGO__PART_TO_PART_RANGE_OFFSET_MM, vl53l1x_readReg16Bit(v, MM_CONFIG__OUTER_OFFSET_MM) * 4);
-
+   printf("initialisation = NULL");
    return NULL;
 }
 
