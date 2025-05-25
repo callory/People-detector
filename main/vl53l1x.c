@@ -1578,8 +1578,10 @@ vl53l1x_t *vl53l1x_config(int8_t port, int8_t scl, int8_t sda, int8_t xshut, uin
 {
    if (port < 0 || scl < 0 || sda < 0 || scl == sda)
       return NULL;
-   if (!GPIO_IS_VALID_OUTPUT_GPIO(scl) || !GPIO_IS_VALID_OUTPUT_GPIO(sda) || (xshut >= 0 && !GPIO_IS_VALID_OUTPUT_GPIO(xshut)))
+   if (!GPIO_IS_VALID_OUTPUT_GPIO(scl) || !GPIO_IS_VALID_OUTPUT_GPIO(sda) || (xshut >= 0 && !GPIO_IS_VALID_OUTPUT_GPIO(xshut))){
+      printf("toto\n");
       return 0;
+   }
    if (i2c_driver_install(port, I2C_MODE_MASTER, 0, 0, 0))
       return NULL;              // Uh?
    i2c_config_t config = {
@@ -1616,6 +1618,9 @@ vl53l1x_t *vl53l1x_config(int8_t port, int8_t scl, int8_t sda, int8_t xshut, uin
    v->port = port;
    v->address = address;
    v->io_timeout = 100;
+   printf("VL53L1X: I2C port %d, SCL %d, SDA %d, XSHUT %d, address 0x%02X, 2V8 mode %s\n",
+          port, scl, sda, xshut, address,
+          io_2v8 ? "enabled" : "disabled");
    return v;
 
 }

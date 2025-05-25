@@ -51,12 +51,12 @@ void i2c_scan()
 }
 void app_main()
 {
-    i2c_master_init();
+    // i2c_master_init();
     printf("Initialisation I2C ok\n");
     vTaskDelay(pdMS_TO_TICKS(3000)); 
-    i2c_scan(); // Ajoute ceci ici                                                                 // Attente de 3 secondes pour s'assurer que l'I2C est prêt
+    // i2c_scan(); // Ajoute ceci ici                                                                 // Attente de 3 secondes pour s'assurer que l'I2C est prêt
     vl53l1x_t *sensor = vl53l1x_config(0, I2C_MASTER_SCL_IO, I2C_MASTER_SDA_IO, -1, VL53L0X_ADDR, 1); // Configuration du capteur
-
+    
     ESP_LOGI(TAG, "Démarrage du programme");
     const char *err = vl53l1x_init(sensor);
     if (err)
