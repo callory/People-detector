@@ -33,6 +33,7 @@ typedef enum {
    VL53L1X_MinRangeFail = 13,
    VL53L1X_RangeInvalid = 14,
    VL53L1X_None = 255,
+   VL53L1X_Test = 15,
 }vl53l1x_RangeStatus;
 
 vl53l1x_t *vl53l1x_config(int8_t port, int8_t scl, int8_t sda, int8_t xshut, uint8_t address, uint8_t io_2v8);

@@ -9,17 +9,18 @@ static const char __attribute__((unused)) TAG[] = "ranger";
 #include "esp_log.h"
 #include <driver/i2c.h>
 
-#define TIMEOUT	(10/portTICK_PERIOD_MS) // I2C command timeout
+#define TIMEOUT (10 / portTICK_PERIOD_MS) // I2C command timeout
 
-#ifdef	CONFIG_VL53L1X_DEBUG
-#define VL53L1X_LOG   ESP_LOGI  // Set to allow I2C logging
+#ifdef CONFIG_VL53L1X_DEBUG
+#define VL53L1X_LOG ESP_LOGI // Set to allow I2C logging
 #endif
 
 #ifndef VL53L1X_LOG
-#define VL53L1X_LOG(tag,...)
+#define VL53L1X_LOG(tag, ...)
 #endif
 
-enum {
+enum
+{
    SOFT_RESET = 0x0000,
    I2C_SLAVE__DEVICE_ADDRESS = 0x0001,
    ANA_CONFIG__VHV_REF_SEL_VDDPIX = 0x0002,
@@ -122,17 +123,17 @@ enum {
    DSS_CONFIG__APERTURE_ATTENUATION = 0x0057,
    DSS_CONFIG__MAX_SPADS_LIMIT = 0x0058,
    DSS_CONFIG__MIN_SPADS_LIMIT = 0x0059,
-   MM_CONFIG__TIMEOUT_MACROP_A = 0x005A,        // added by Pololu for 16-bit accesses
+   MM_CONFIG__TIMEOUT_MACROP_A = 0x005A, // added by Pololu for 16-bit accesses
    MM_CONFIG__TIMEOUT_MACROP_A_HI = 0x005A,
    MM_CONFIG__TIMEOUT_MACROP_A_LO = 0x005B,
-   MM_CONFIG__TIMEOUT_MACROP_B = 0x005C,        // added by Pololu for 16-bit accesses
+   MM_CONFIG__TIMEOUT_MACROP_B = 0x005C, // added by Pololu for 16-bit accesses
    MM_CONFIG__TIMEOUT_MACROP_B_HI = 0x005C,
    MM_CONFIG__TIMEOUT_MACROP_B_LO = 0x005D,
-   RANGE_CONFIG__TIMEOUT_MACROP_A = 0x005E,     // added by Pololu for 16-bit accesses
+   RANGE_CONFIG__TIMEOUT_MACROP_A = 0x005E, // added by Pololu for 16-bit accesses
    RANGE_CONFIG__TIMEOUT_MACROP_A_HI = 0x005E,
    RANGE_CONFIG__TIMEOUT_MACROP_A_LO = 0x005F,
    RANGE_CONFIG__VCSEL_PERIOD_A = 0x0060,
-   RANGE_CONFIG__TIMEOUT_MACROP_B = 0x0061,     // added by Pololu for 16-bit accesses
+   RANGE_CONFIG__TIMEOUT_MACROP_B = 0x0061, // added by Pololu for 16-bit accesses
    RANGE_CONFIG__TIMEOUT_MACROP_B_HI = 0x0061,
    RANGE_CONFIG__TIMEOUT_MACROP_B_LO = 0x0062,
    RANGE_CONFIG__VCSEL_PERIOD_B = 0x0063,
@@ -1208,7 +1209,8 @@ enum {
    SHADOW_PHASECAL_RESULT__REFERENCE_PHASE_LO = 0x0FFF,
 };
 
-struct vl53l1x_s {
+struct vl53l1x_s
+{
    uint8_t port;
    uint8_t address;
    int8_t xshut;
@@ -1217,20 +1219,22 @@ struct vl53l1x_s {
    uint16_t osc_calibrate_val;
    uint16_t timeout_start_ms;
    esp_err_t err;
-   uint8_t io_2v8:1;
-   uint8_t did_timeout:1;
-   uint8_t i2c_fail:1;
-   uint8_t calibrated:1;
+   uint8_t io_2v8 : 1;
+   uint8_t did_timeout : 1;
+   uint8_t i2c_fail : 1;
+   uint8_t calibrated : 1;
    uint8_t saved_vhv_init;
    uint8_t saved_vhv_timeout;
 
-   struct RangingData {
+   struct RangingData
+   {
       uint16_t range_mm;
       vl53l1x_RangeStatus range_status;
       float peak_signal_count_rate_MCPS;
       float ambient_count_rate_MCPS;
    } ranging_data;
-   struct ResultBuffer {
+   struct ResultBuffer
+   {
       uint8_t range_status;
       uint8_t stream_count;
       uint16_t dss_actual_effective_spads_sd0;
@@ -1240,51 +1244,53 @@ struct vl53l1x_s {
    } results;
 };
 
-typedef struct {
-   uint8_t tcc:1;
-   uint8_t msrc:1;
-   uint8_t dss:1;
-   uint8_t pre_range:1;
-   uint8_t final_range:1;
+typedef struct
+{
+   uint8_t tcc : 1;
+   uint8_t msrc : 1;
+   uint8_t dss : 1;
+   uint8_t pre_range : 1;
+   uint8_t final_range : 1;
 } SequenceStepEnables;
 
-typedef struct {
+typedef struct
+{
    uint16_t pre_range_vcsel_period_pclks,
-    final_range_vcsel_period_pclks;
+       final_range_vcsel_period_pclks;
    uint16_t msrc_dss_tcc_mclks,
-    pre_range_mclks,
-    final_range_mclks;
+       pre_range_mclks,
+       final_range_mclks;
    uint32_t msrc_dss_tcc_us,
-    pre_range_us,
-    final_range_us;
+       pre_range_us,
+       final_range_us;
 } SequenceStepTimeouts;
 
 static const uint16_t TargetRate = 0x0A00;
 static const uint32_t TimingGuard = 4528;
-#define millis() (esp_timer_get_time()/1000LL)
+#define millis() (esp_timer_get_time() / 1000LL)
 
 static void vl53l1x_getRangingData(vl53l1x_t *);
 static void vl53l1x_updateDSS(vl53l1x_t *);
 static void vl53l1x_readResults(vl53l1x_t *);
-uint8_t vl53l1x_readReg(vl53l1x_t * v, uint16_t reg);
-void vl53l1x_writeReg(vl53l1x_t * v, uint16_t reg, uint8_t val);
-uint8_t vl53l1x_setDistanceMode(vl53l1x_t * v, vl53l1x_DistanceMode mode);
+uint8_t vl53l1x_readReg(vl53l1x_t *v, uint16_t reg);
+void vl53l1x_writeReg(vl53l1x_t *v, uint16_t reg, uint8_t val);
+uint8_t vl53l1x_setDistanceMode(vl53l1x_t *v, vl53l1x_DistanceMode mode);
 
 // Record the current time to check an upcoming timeout against
-static inline void vl53l1x_startTimeout(vl53l1x_t * v)
+static inline void vl53l1x_startTimeout(vl53l1x_t *v)
 {
    v->timeout_start_ms = millis();
 }
 
 // Check if timeout is enabled (set to nonzero value) and has expired
-static inline uint8_t vl53l1x_checkTimeoutExpired(vl53l1x_t * v)
+static inline uint8_t vl53l1x_checkTimeoutExpired(vl53l1x_t *v)
 {
-   return (v->io_timeout > 0) && ((uint16_t) (millis() - v->timeout_start_ms) > v->io_timeout);
+   return (v->io_timeout > 0) && ((uint16_t)(millis() - v->timeout_start_ms) > v->io_timeout);
 }
 
 uint32_t vl53l1x_timeoutMicrosecondsToMclks(uint32_t timeout_us, uint32_t macro_period_us)
 {
-   return (((uint32_t) timeout_us << 12) + (macro_period_us >> 1)) / macro_period_us;
+   return (((uint32_t)timeout_us << 12) + (macro_period_us >> 1)) / macro_period_us;
 }
 
 // Convert sequence step timeout from macro periods to microseconds with given
@@ -1292,13 +1298,13 @@ uint32_t vl53l1x_timeoutMicrosecondsToMclks(uint32_t timeout_us, uint32_t macro_
 // based on VL53L1_calc_timeout_us()
 static uint32_t vl53l1x_timeoutMclksToMicroseconds(uint32_t timeout_mclks, uint32_t macro_period_us)
 {
-   return ((uint64_t) timeout_mclks * macro_period_us + 0x800) >> 12;
+   return ((uint64_t)timeout_mclks * macro_period_us + 0x800) >> 12;
 }
 
 // "Setup ranges after the first one in low power auto mode by turning off
 // FW calibration steps and programming static values"
 // based on VL53L1_low_power_auto_setup_manual_calibration()
-void vl53l1x_setupManualCalibration(vl53l1x_t * v)
+void vl53l1x_setupManualCalibration(vl53l1x_t *v)
 {
    // "save original vhv configs"
    v->saved_vhv_init = vl53l1x_readReg(v, VHV_CONFIG__INIT);
@@ -1308,7 +1314,7 @@ void vl53l1x_setupManualCalibration(vl53l1x_t * v)
    vl53l1x_writeReg(v, VHV_CONFIG__INIT, v->saved_vhv_init & 0x7F);
 
    // "set loop bound to tuning param"
-   vl53l1x_writeReg(v, VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND, (v->saved_vhv_timeout & 0x03) + (3 << 2));        // tuning parm default (LOWPOWERAUTO_VHV_LOOP_BOUND_DEFAULT)
+   vl53l1x_writeReg(v, VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND, (v->saved_vhv_timeout & 0x03) + (3 << 2)); // tuning parm default (LOWPOWERAUTO_VHV_LOOP_BOUND_DEFAULT)
 
    // "override phasecal"
    vl53l1x_writeReg(v, PHASECAL_CONFIG__OVERRIDE, 0x01);
@@ -1335,7 +1341,8 @@ uint16_t vl53l1x_encodeTimeout(uint32_t timeout_mclks)
       }
 
       return (ms_byte << 8) | (ls_byte & 0xFF);
-   } else
+   }
+   else
    {
       return 0;
    }
@@ -1344,17 +1351,17 @@ uint16_t vl53l1x_encodeTimeout(uint32_t timeout_mclks)
 // Calculate macro period in microseconds (12.12 format) with given VCSEL period
 // assumes fast_osc_frequency has been read and stored
 // based on VL53L1_calc_macro_period_us()
-uint32_t vl53l1x_calcMacroPeriod(vl53l1x_t * v, uint8_t vcsel_period)
+uint32_t vl53l1x_calcMacroPeriod(vl53l1x_t *v, uint8_t vcsel_period)
 {
    // from VL53L1_calc_pll_period_us()
    // fast osc frequency in 4.12 format; PLL period in 0.24 format
-   uint32_t pll_period_us = ((uint32_t) 0x01 << 30) / v->fast_osc_frequency;
+   uint32_t pll_period_us = ((uint32_t)0x01 << 30) / v->fast_osc_frequency;
 
    // from VL53L1_decode_vcsel_period()
    uint8_t vcsel_period_pclks = (vcsel_period + 1) << 1;
 
    // VL53L1_MACRO_PERIOD_VCSEL_PERIODS = 2304
-   uint32_t macro_period_us = (uint32_t) 2304 * pll_period_us;
+   uint32_t macro_period_us = (uint32_t)2304 * pll_period_us;
    macro_period_us >>= 6;
    macro_period_us *= vcsel_period_pclks;
    macro_period_us >>= 6;
@@ -1366,7 +1373,7 @@ uint32_t vl53l1x_calcMacroPeriod(vl53l1x_t * v, uint8_t vcsel_period)
 // based on VL53L1_decode_timeout()
 uint32_t vl53l1x_decodeTimeout(uint16_t reg_val)
 {
-   return ((uint32_t) (reg_val & 0xFF) << (reg_val >> 8)) + 1;
+   return ((uint32_t)(reg_val & 0xFF) << (reg_val >> 8)) + 1;
 }
 
 // Encode VCSEL pulse period register value from period in PCLKs
@@ -1380,7 +1387,7 @@ static inline uint16_t vl53l1xencodeVcselPeriod(uint16_t period_pclks)
 // for one measurement. A longer timing budget allows for more accurate
 // measurements.
 // based on VL53L1_SetMeasurementTimingBudgetMicroSeconds()
-uint8_t vl53l1x_setMeasurementTimingBudget(vl53l1x_t * v, uint32_t budget_us)
+uint8_t vl53l1x_setMeasurementTimingBudget(vl53l1x_t *v, uint32_t budget_us)
 {
    // assumes PresetMode is LOWPOWER_AUTONOMOUS
 
@@ -1393,7 +1400,7 @@ uint8_t vl53l1x_setMeasurementTimingBudget(vl53l1x_t * v, uint32_t budget_us)
    if (range_config_timeout_us > 1100000)
    {
       return false;
-   }                            // FDA_MAX_TIMING_BUDGET_US * 2
+   } // FDA_MAX_TIMING_BUDGET_US * 2
 
    range_config_timeout_us /= 2;
 
@@ -1441,17 +1448,17 @@ uint8_t vl53l1x_setMeasurementTimingBudget(vl53l1x_t * v, uint32_t budget_us)
    return true;
 }
 
-uint8_t vl53l1x_dataReady(vl53l1x_t * v)
+uint8_t vl53l1x_dataReady(vl53l1x_t *v)
 {
    return (vl53l1x_readReg(v, GPIO__TIO_HV_STATUS) & 0x01) == 0;
 }
 
 static inline float countRateFixedToFloat(uint16_t count_rate_fixed)
 {
-   return (float) count_rate_fixed / (1 << 7);
+   return (float)count_rate_fixed / (1 << 7);
 }
 
-static esp_err_t Done(vl53l1x_t * v, i2c_cmd_handle_t i)
+static esp_err_t Done(vl53l1x_t *v, i2c_cmd_handle_t i)
 {
    i2c_master_stop(i);
    v->err = i2c_master_cmd_begin(v->port, i, TIMEOUT);
@@ -1464,8 +1471,8 @@ static esp_err_t Done(vl53l1x_t * v, i2c_cmd_handle_t i)
    return v->err;
 }
 
-static i2c_cmd_handle_t Read(vl53l1x_t * v, uint16_t reg)
-{                               // Set up for read
+static i2c_cmd_handle_t Read(vl53l1x_t *v, uint16_t reg)
+{ // Set up for read
    i2c_cmd_handle_t i = i2c_cmd_link_create();
    i2c_master_start(i);
    i2c_master_write_byte(i, (v->address << 1), 1);
@@ -1478,8 +1485,8 @@ static i2c_cmd_handle_t Read(vl53l1x_t * v, uint16_t reg)
    return i;
 }
 
-static i2c_cmd_handle_t Write(vl53l1x_t * v, uint16_t reg)
-{                               // Set up for write
+static i2c_cmd_handle_t Write(vl53l1x_t *v, uint16_t reg)
+{ // Set up for write
    i2c_cmd_handle_t i = i2c_cmd_link_create();
    i2c_master_start(i);
    i2c_master_write_byte(i, (v->address << 1), 1);
@@ -1488,7 +1495,7 @@ static i2c_cmd_handle_t Write(vl53l1x_t * v, uint16_t reg)
    return i;
 }
 
-void vl53l1x_writeReg(vl53l1x_t * v, uint16_t reg, uint8_t val)
+void vl53l1x_writeReg(vl53l1x_t *v, uint16_t reg, uint8_t val)
 {
    i2c_cmd_handle_t i = Write(v, reg);
    i2c_master_write_byte(i, val, 1);
@@ -1496,7 +1503,7 @@ void vl53l1x_writeReg(vl53l1x_t * v, uint16_t reg, uint8_t val)
    VL53L1X_LOG(TAG, "W %04X=%02X %s", reg, val, esp_err_to_name(v->err));
 }
 
-void vl53l1x_writeReg16Bit(vl53l1x_t * v, uint16_t reg, uint16_t val)
+void vl53l1x_writeReg16Bit(vl53l1x_t *v, uint16_t reg, uint16_t val)
 {
    i2c_cmd_handle_t i = Write(v, reg);
    i2c_master_write_byte(i, val >> 8, 1);
@@ -1505,7 +1512,7 @@ void vl53l1x_writeReg16Bit(vl53l1x_t * v, uint16_t reg, uint16_t val)
    VL53L1X_LOG(TAG, "W %04X=%04X %s", reg, val, esp_err_to_name(v->err));
 }
 
-void vl53l1x_writeReg32Bit(vl53l1x_t * v, uint16_t reg, uint32_t val)
+void vl53l1x_writeReg32Bit(vl53l1x_t *v, uint16_t reg, uint32_t val)
 {
    i2c_cmd_handle_t i = Write(v, reg);
    i2c_master_write_byte(i, val >> 24, 1);
@@ -1516,9 +1523,9 @@ void vl53l1x_writeReg32Bit(vl53l1x_t * v, uint16_t reg, uint32_t val)
    VL53L1X_LOG(TAG, "W %04X=%08lX %s", reg, val, esp_err_to_name(v->err));
 }
 
-uint8_t vl53l1x_readReg(vl53l1x_t * v, uint16_t reg)
+uint8_t vl53l1x_readReg(vl53l1x_t *v, uint16_t reg)
 {
-   uint8_t buf[1] = { };
+   uint8_t buf[1] = {};
    i2c_cmd_handle_t i = Read(v, reg);
    i2c_master_read_byte(i, buf + 0, I2C_MASTER_LAST_NACK);
    v->err = Done(v, i);
@@ -1526,9 +1533,9 @@ uint8_t vl53l1x_readReg(vl53l1x_t * v, uint16_t reg)
    return buf[0];
 }
 
-uint16_t vl53l1x_readReg16Bit(vl53l1x_t * v, uint16_t reg)
+uint16_t vl53l1x_readReg16Bit(vl53l1x_t *v, uint16_t reg)
 {
-   uint8_t buf[2] = { };
+   uint8_t buf[2] = {};
    i2c_cmd_handle_t i = Read(v, reg);
    i2c_master_read_byte(i, buf + 0, I2C_MASTER_ACK);
    i2c_master_read_byte(i, buf + 1, I2C_MASTER_LAST_NACK);
@@ -1537,9 +1544,9 @@ uint16_t vl53l1x_readReg16Bit(vl53l1x_t * v, uint16_t reg)
    return (buf[0] << 8) + buf[1];
 }
 
-uint32_t vl53l1x_readReg32Bit(vl53l1x_t * v, uint16_t reg)
+uint32_t vl53l1x_readReg32Bit(vl53l1x_t *v, uint16_t reg)
 {
-   uint8_t buf[4] = { };
+   uint8_t buf[4] = {};
    i2c_cmd_handle_t i = Read(v, reg);
    i2c_master_read_byte(i, buf + 0, I2C_MASTER_ACK);
    i2c_master_read_byte(i, buf + 1, I2C_MASTER_ACK);
@@ -1554,7 +1561,7 @@ uint32_t vl53l1x_readReg32Bit(vl53l1x_t * v, uint16_t reg)
 
 // Read an arbitrary number of bytes from the sensor, starting at the given
 // register, into the given array
-void vl53l1x_readMulti(vl53l1x_t * v, uint16_t reg, uint8_t * dst, uint8_t count)
+void vl53l1x_readMulti(vl53l1x_t *v, uint16_t reg, uint8_t *dst, uint8_t count)
 {
    i2c_cmd_handle_t i = Read(v, reg);
    if (count > 1)
@@ -1566,10 +1573,10 @@ void vl53l1x_readMulti(vl53l1x_t * v, uint16_t reg, uint8_t * dst, uint8_t count
 
 // Write an arbitrary number of bytes from the given array to the sensor,
 // starting at the given register
-void vl53l1x_writeMulti(vl53l1x_t * v, uint16_t reg, uint8_t const *src, uint8_t count)
+void vl53l1x_writeMulti(vl53l1x_t *v, uint16_t reg, uint8_t const *src, uint8_t count)
 {
    i2c_cmd_handle_t i = Write(v, reg);
-   i2c_master_write(i, (uint8_t *) src, count, 1);
+   i2c_master_write(i, (uint8_t *)src, count, 1);
    v->err = Done(v, i);
    VL53L1X_LOG(TAG, "W %04X (%d) %s", reg, count, esp_err_to_name(v->err));
 }
@@ -1578,26 +1585,27 @@ vl53l1x_t *vl53l1x_config(int8_t port, int8_t scl, int8_t sda, int8_t xshut, uin
 {
    if (port < 0 || scl < 0 || sda < 0 || scl == sda)
       return NULL;
-   if (!GPIO_IS_VALID_OUTPUT_GPIO(scl) || !GPIO_IS_VALID_OUTPUT_GPIO(sda) || (xshut >= 0 && !GPIO_IS_VALID_OUTPUT_GPIO(xshut))){
+   if (!GPIO_IS_VALID_OUTPUT_GPIO(scl) || !GPIO_IS_VALID_OUTPUT_GPIO(sda) || (xshut >= 0 && !GPIO_IS_VALID_OUTPUT_GPIO(xshut)))
+   {
       printf("toto\n");
       return 0;
    }
    if (i2c_driver_install(port, I2C_MODE_MASTER, 0, 0, 0))
-      return NULL;              // Uh?
+      return NULL; // Uh?
    i2c_config_t config = {
-      .mode = I2C_MODE_MASTER,
-      .sda_io_num = sda,
-      .scl_io_num = scl,
-      .sda_pullup_en = true,
-      .scl_pullup_en = true,
-      .master.clk_speed = 100000,
+       .mode = I2C_MODE_MASTER,
+       .sda_io_num = sda,
+       .scl_io_num = scl,
+       .sda_pullup_en = true,
+       .scl_pullup_en = true,
+       .master.clk_speed = 100000,
    };
    if (i2c_param_config(port, &config))
-   {                            // Config failed
+   { // Config failed
       i2c_driver_delete(port);
       return NULL;
    }
-   i2c_set_timeout(port, 80000);        // Clock stretching
+   i2c_set_timeout(port, 2000); // Clock stretching
    i2c_filter_enable(port, 5);
    if (xshut >= 0)
    {
@@ -1608,13 +1616,14 @@ vl53l1x_t *vl53l1x_config(int8_t port, int8_t scl, int8_t sda, int8_t xshut, uin
    }
    vl53l1x_t *v = malloc(sizeof(*v));
    if (!v)
-   {                            // Uh?
+   { // Uh?
       i2c_driver_delete(port);
       return v;
    }
    memset(v, 0, sizeof(*v));
    v->xshut = xshut;
    v->io_2v8 = io_2v8;
+
    v->port = port;
    v->address = address;
    v->io_timeout = 100;
@@ -1622,16 +1631,15 @@ vl53l1x_t *vl53l1x_config(int8_t port, int8_t scl, int8_t sda, int8_t xshut, uin
           port, scl, sda, xshut, address,
           io_2v8 ? "enabled" : "disabled");
    return v;
-
 }
 
-void vl53l1x_setAddress(vl53l1x_t * v, uint8_t new_addr)
+void vl53l1x_setAddress(vl53l1x_t *v, uint8_t new_addr)
 {
    vl53l1x_writeReg(v, I2C_SLAVE__DEVICE_ADDRESS, new_addr & 0x7F);
    v->address = new_addr;
 }
 
-const char *vl53l1x_init(vl53l1x_t * v)
+const char *vl53l1x_init(vl53l1x_t *v)
 {
    // check model ID and module type registers (values specified in datasheet)
    if (vl53l1x_readReg16Bit(v, IDENTIFICATION__MODEL_ID) != 0xEACC)
@@ -1700,14 +1708,14 @@ const char *vl53l1x_init(vl53l1x_t * v)
    // static config
    // API resets PAD_I2C_HV__EXTSUP_CONFIG here, but maybe we don't want to do
    // that? (seems like it would disable 2V8 mode)
-   vl53l1x_writeReg16Bit(v, DSS_CONFIG__TARGET_TOTAL_RATE_MCPS, TargetRate);    // should already be this value after reset
+   vl53l1x_writeReg16Bit(v, DSS_CONFIG__TARGET_TOTAL_RATE_MCPS, TargetRate); // should already be this value after reset
    vl53l1x_writeReg(v, GPIO__TIO_HV_STATUS, 0x02);
-   vl53l1x_writeReg(v, SIGMA_ESTIMATOR__EFFECTIVE_PULSE_WIDTH_NS, 8);   // tuning parm default
-   vl53l1x_writeReg(v, SIGMA_ESTIMATOR__EFFECTIVE_AMBIENT_WIDTH_NS, 16);        // tuning parm default
+   vl53l1x_writeReg(v, SIGMA_ESTIMATOR__EFFECTIVE_PULSE_WIDTH_NS, 8);    // tuning parm default
+   vl53l1x_writeReg(v, SIGMA_ESTIMATOR__EFFECTIVE_AMBIENT_WIDTH_NS, 16); // tuning parm default
    vl53l1x_writeReg(v, ALGO__CROSSTALK_COMPENSATION_VALID_HEIGHT_MM, 0x01);
    vl53l1x_writeReg(v, ALGO__RANGE_IGNORE_VALID_HEIGHT_MM, 0xFF);
-   vl53l1x_writeReg(v, ALGO__RANGE_MIN_CLIP, 0);        // tuning parm default
-   vl53l1x_writeReg(v, ALGO__CONSISTENCY_CHECK__TOLERANCE, 2);  // tuning parm default
+   vl53l1x_writeReg(v, ALGO__RANGE_MIN_CLIP, 0);               // tuning parm default
+   vl53l1x_writeReg(v, ALGO__CONSISTENCY_CHECK__TOLERANCE, 2); // tuning parm default
 
    // general config
    vl53l1x_writeReg16Bit(v, SYSTEM__THRESH_RATE_HIGH, 0x0000);
@@ -1717,14 +1725,14 @@ const char *vl53l1x_init(vl53l1x_t * v)
    // timing config
    // most of these settings will be determined later by distance and timing
    // budget configuration
-   vl53l1x_writeReg16Bit(v, RANGE_CONFIG__SIGMA_THRESH, 360);   // tuning parm default
-   vl53l1x_writeReg16Bit(v, RANGE_CONFIG__MIN_COUNT_RATE_RTN_LIMIT_MCPS, 192);  // tuning parm default
+   vl53l1x_writeReg16Bit(v, RANGE_CONFIG__SIGMA_THRESH, 360);                  // tuning parm default
+   vl53l1x_writeReg16Bit(v, RANGE_CONFIG__MIN_COUNT_RATE_RTN_LIMIT_MCPS, 192); // tuning parm default
 
    // dynamic config
 
    vl53l1x_writeReg(v, SYSTEM__GROUPED_PARAMETER_HOLD_0, 0x01);
    vl53l1x_writeReg(v, SYSTEM__GROUPED_PARAMETER_HOLD_1, 0x01);
-   vl53l1x_writeReg(v, SD_CONFIG__QUANTIFIER, 2);       // tuning parm default
+   vl53l1x_writeReg(v, SD_CONFIG__QUANTIFIER, 2); // tuning parm default
 
    // VL53L1_preset_mode_standard_ranging() end
 
@@ -1736,9 +1744,9 @@ const char *vl53l1x_init(vl53l1x_t * v)
    vl53l1x_writeReg(v, SYSTEM__SEED_CONFIG, 1); // tuning parm default
 
    // from VL53L1_config_low_power_auto_mode
-   vl53l1x_writeReg(v, SYSTEM__SEQUENCE_CONFIG, 0x8B);  // VHV, PHASECAL, DSS1, RANGE
+   vl53l1x_writeReg(v, SYSTEM__SEQUENCE_CONFIG, 0x8B); // VHV, PHASECAL, DSS1, RANGE
    vl53l1x_writeReg16Bit(v, DSS_CONFIG__MANUAL_EFFECTIVE_SPADS_SELECT, 200 << 8);
-   vl53l1x_writeReg(v, DSS_CONFIG__ROI_MODE_CONTROL, 2);        // REQUESTED_EFFFECTIVE_SPADS
+   vl53l1x_writeReg(v, DSS_CONFIG__ROI_MODE_CONTROL, 2); // REQUESTED_EFFFECTIVE_SPADS
 
    // VL53L1_set_preset_mode() end
 
@@ -1746,8 +1754,26 @@ const char *vl53l1x_init(vl53l1x_t * v)
    // note that this is different than what the API defaults to
    vl53l1x_setDistanceMode(v, VL53L1X_Long);
    vl53l1x_setMeasurementTimingBudget(v, 50000);
+   // Calibration obligatoire VHV et phasecal
+   vl53l1x_writeReg(v, SYSTEM__INTERRUPT_CLEAR, 0x01); // Clear interrupts
+   vl53l1x_writeReg(v, SYSTEM__MODE_START, 0x40);      // Start measurement
 
-   // VL53L1_StaticInit() end
+   // Attendre que la mesure soit prête (data ready)
+   vl53l1x_startTimeout(v);
+   while (!vl53l1x_dataReady(v))
+   {
+      if (vl53l1x_checkTimeoutExpired(v))
+      {
+         printf("Timeout attente mesure de calibration\n");
+         return "Timeout calibration";
+      }
+   }
+
+   // Clear l'interruption après calibration
+   vl53l1x_writeReg(v, SYSTEM__INTERRUPT_CLEAR, 0x01);
+   vl53l1x_writeReg(v, SYSTEM__MODE_START, 0x00); // Stop ranging
+
+   // VL53L1_StaticInit() endd
 
    // the API triggers this change in VL53L1_init_and_start_range() once a
    // measurement is started; assumes MM1 and MM2 are disabled
@@ -1757,7 +1783,7 @@ const char *vl53l1x_init(vl53l1x_t * v)
 }
 
 // set distance mode to Short, Medium, or Long
-uint8_t vl53l1x_setDistanceMode(vl53l1x_t * v, vl53l1x_DistanceMode mode)
+uint8_t vl53l1x_setDistanceMode(vl53l1x_t *v, vl53l1x_DistanceMode mode)
 {
    // save existing timing budget
    uint32_t budget_us = vl53l1x_getMeasurementTimingBudget(v);
@@ -1775,8 +1801,8 @@ uint8_t vl53l1x_setDistanceMode(vl53l1x_t * v, vl53l1x_DistanceMode mode)
       // dynamic config
       vl53l1x_writeReg(v, SD_CONFIG__WOI_SD0, 0x07);
       vl53l1x_writeReg(v, SD_CONFIG__WOI_SD1, 0x05);
-      vl53l1x_writeReg(v, SD_CONFIG__INITIAL_PHASE_SD0, 6);     // tuning parm default
-      vl53l1x_writeReg(v, SD_CONFIG__INITIAL_PHASE_SD1, 6);     // tuning parm default
+      vl53l1x_writeReg(v, SD_CONFIG__INITIAL_PHASE_SD0, 6); // tuning parm default
+      vl53l1x_writeReg(v, SD_CONFIG__INITIAL_PHASE_SD1, 6); // tuning parm default
 
       break;
 
@@ -1791,12 +1817,12 @@ uint8_t vl53l1x_setDistanceMode(vl53l1x_t * v, vl53l1x_DistanceMode mode)
       // dynamic config
       vl53l1x_writeReg(v, SD_CONFIG__WOI_SD0, 0x0B);
       vl53l1x_writeReg(v, SD_CONFIG__WOI_SD1, 0x09);
-      vl53l1x_writeReg(v, SD_CONFIG__INITIAL_PHASE_SD0, 10);    // tuning parm default
-      vl53l1x_writeReg(v, SD_CONFIG__INITIAL_PHASE_SD1, 10);    // tuning parm default
+      vl53l1x_writeReg(v, SD_CONFIG__INITIAL_PHASE_SD0, 10); // tuning parm default
+      vl53l1x_writeReg(v, SD_CONFIG__INITIAL_PHASE_SD1, 10); // tuning parm default
 
       break;
 
-   case VL53L1X_Long:          // long
+   case VL53L1X_Long: // long
       // from VL53L1_preset_mode_standard_ranging_long_range()
 
       // timing config
@@ -1807,8 +1833,8 @@ uint8_t vl53l1x_setDistanceMode(vl53l1x_t * v, vl53l1x_DistanceMode mode)
       // dynamic config
       vl53l1x_writeReg(v, SD_CONFIG__WOI_SD0, 0x0F);
       vl53l1x_writeReg(v, SD_CONFIG__WOI_SD1, 0x0D);
-      vl53l1x_writeReg(v, SD_CONFIG__INITIAL_PHASE_SD0, 14);    // tuning parm default
-      vl53l1x_writeReg(v, SD_CONFIG__INITIAL_PHASE_SD1, 14);    // tuning parm default
+      vl53l1x_writeReg(v, SD_CONFIG__INITIAL_PHASE_SD0, 14); // tuning parm default
+      vl53l1x_writeReg(v, SD_CONFIG__INITIAL_PHASE_SD1, 14); // tuning parm default
 
       break;
 
@@ -1825,7 +1851,7 @@ uint8_t vl53l1x_setDistanceMode(vl53l1x_t * v, vl53l1x_DistanceMode mode)
 
 // Get the measurement timing budget in microseconds
 // based on VL53L1_SetMeasurementTimingBudgetMicroSeconds()
-uint32_t vl53l1x_getMeasurementTimingBudget(vl53l1x_t * v)
+uint32_t vl53l1x_getMeasurementTimingBudget(vl53l1x_t *v)
 {
    // assumes PresetMode is LOWPOWER_AUTONOMOUS and these sequence steps are
    // enabled: VHV, PHASECAL, DSS1, RANGE
@@ -1849,7 +1875,7 @@ uint32_t vl53l1x_getMeasurementTimingBudget(vl53l1x_t * v)
 //
 // ST user manual UM2555 explains ROI selection in detail, so we recommend
 // reading that document carefully.
-void vl53l1x_setROISize(vl53l1x_t * v, uint8_t width, uint8_t height)
+void vl53l1x_setROISize(vl53l1x_t *v, uint8_t width, uint8_t height)
 {
    if (width > 16)
    {
@@ -1873,7 +1899,7 @@ void vl53l1x_setROISize(vl53l1x_t * v, uint8_t width, uint8_t height)
 
 // Get the width and height of the region of interest (ROI)
 // based on VL53L1X_GetROI_XY() from STSW-IMG009 Ultra Lite Driver
-void vl53l1x_getROISize(vl53l1x_t * v, uint8_t * width, uint8_t * height)
+void vl53l1x_getROISize(vl53l1x_t *v, uint8_t *width, uint8_t *height)
 {
    uint8_t reg_val = vl53l1x_readReg(v, ROI_CONFIG__USER_ROI_REQUESTED_GLOBAL_XY_SIZE);
    *width = (reg_val & 0xF) + 1;
@@ -1929,34 +1955,40 @@ void vl53l1x_getROISize(vl53l1x_t * v, uint8_t * width, uint8_t * height)
 // (like the way a camera works). So for example, to shift the sensor's FOV to
 // sense objects toward the upper left, you should pick a center SPAD in the
 // lower right.
-void vl53l1x_setROICenter(vl53l1x_t * v, uint8_t spadNumber)
+void vl53l1x_setROICenter(vl53l1x_t *v, uint8_t spadNumber)
 {
    vl53l1x_writeReg(v, ROI_CONFIG__USER_ROI_CENTRE_SPAD, spadNumber);
 }
 
 // Get the center SPAD of the region of interest
 // based on VL53L1X_GetROICenter() from STSW-IMG009 Ultra Lite Driver
-uint8_t vl53l1x_getROICenter(vl53l1x_t * v)
+uint8_t vl53l1x_getROICenter(vl53l1x_t *v)
 {
    return vl53l1x_readReg(v, ROI_CONFIG__USER_ROI_CENTRE_SPAD);
 }
 
 // Start continuous ranging measurements, with the given inter-measurement
 // period in milliseconds determining how often the sensor takes a measurement.
-void vl53l1x_startContinuous(vl53l1x_t * v, uint32_t period_ms)
+void vl53l1x_startContinuous(vl53l1x_t *v, uint32_t period_ms)
 {
    // from VL53L1_set_inter_measurement_period_ms()
+   if (v->osc_calibrate_val == 0)
+   {
+      v->osc_calibrate_val = vl53l1x_readReg16Bit(v, 0x00DE);
+      if (v->osc_calibrate_val == 0)
+         v->osc_calibrate_val = 0x0315;
+   }
    vl53l1x_writeReg32Bit(v, SYSTEM__INTERMEASUREMENT_PERIOD, period_ms * v->osc_calibrate_val);
 
-   vl53l1x_writeReg(v, SYSTEM__INTERRUPT_CLEAR, 0x01);  // sys_interrupt_clear_range
-   vl53l1x_writeReg(v, SYSTEM__MODE_START, 0x40);       // mode_range__timed
+   vl53l1x_writeReg(v, SYSTEM__INTERRUPT_CLEAR, 0x01); // sys_interrupt_clear_range
+   vl53l1x_writeReg(v, SYSTEM__MODE_START, 0x40);      // mode_range__timed
 }
 
 // Stop continuous measurements
 // based on VL53L1_stop_range()
-void vl53l1x_stopContinuous(vl53l1x_t * v)
+void vl53l1x_stopContinuous(vl53l1x_t *v)
 {
-   vl53l1x_writeReg(v, SYSTEM__MODE_START, 0x80);       // mode_range__abort
+   vl53l1x_writeReg(v, SYSTEM__MODE_START, 0x80); // mode_range__abort
 
    // VL53L1_low_power_auto_data_stop_range() begin
 
@@ -1983,7 +2015,7 @@ void vl53l1x_stopContinuous(vl53l1x_t * v)
 // be available. If blocking is false, it will try to return data immediately.
 // (readSingle() also calls this function after starting a single-shot range
 // measurement)
-uint16_t vl53l1x_read(vl53l1x_t * v, uint8_t blocking)
+uint16_t vl53l1x_read(vl53l1x_t *v, uint8_t blocking)
 {
    if (blocking)
    {
@@ -1995,7 +2027,6 @@ uint16_t vl53l1x_read(vl53l1x_t * v, uint8_t blocking)
             v->did_timeout = true;
             printf("Timeout waiting for data ready\n");
             return 0;
-
          }
       }
    }
@@ -2014,7 +2045,8 @@ uint16_t vl53l1x_read(vl53l1x_t * v, uint8_t blocking)
 
    vl53l1x_getRangingData(v);
 
-   vl53l1x_writeReg(v, SYSTEM__INTERRUPT_CLEAR, 0x01);  // sys_interrupt_clear_range
+   vl53l1x_writeReg(v, SYSTEM__INTERRUPT_CLEAR, 0x01); // sys_interrupt_clear_range
+   printf("Range status: %s\n", vl53l1x_rangeStatusToString(v, v->ranging_data.range_status));
    printf("Range: %d mm\n", v->ranging_data.range_mm);
 
    return v->ranging_data.range_mm;
@@ -2023,10 +2055,10 @@ uint16_t vl53l1x_read(vl53l1x_t * v, uint8_t blocking)
 // Starts a single-shot range measurement. If blocking is true (the default),
 // this function waits for the measurement to finish and returns the reading.
 // Otherwise, it returns 0 immediately.
-uint16_t vl53l1x_readSingle(vl53l1x_t * v, uint8_t blocking)
+uint16_t vl53l1x_readSingle(vl53l1x_t *v, uint8_t blocking)
 {
-   vl53l1x_writeReg(v, SYSTEM__INTERRUPT_CLEAR, 0x01);  // sys_interrupt_clear_range
-   vl53l1x_writeReg(v, SYSTEM__MODE_START, 0x10);       // mode_range__single_shot
+   vl53l1x_writeReg(v, SYSTEM__INTERRUPT_CLEAR, 0x01); // sys_interrupt_clear_range
+   vl53l1x_writeReg(v, SYSTEM__MODE_START, 0x10);      // mode_range__single_shot
 
    if (blocking)
       return vl53l1x_read(v, true);
@@ -2038,7 +2070,7 @@ uint16_t vl53l1x_readSingle(vl53l1x_t * v, uint8_t blocking)
 // makes working with them easier but uses up 200+ bytes of RAM (many AVR-based
 // Arduinos only have about 2000 bytes of RAM). You can avoid this memory usage
 // if you do not call this function in your sketch.
-const char *vl53l1x_rangeStatusToString(vl53l1x_t * v, vl53l1x_RangeStatus status)
+const char *vl53l1x_rangeStatusToString(vl53l1x_t *v, vl53l1x_RangeStatus status)
 {
    switch (status)
    {
@@ -2077,6 +2109,8 @@ const char *vl53l1x_rangeStatusToString(vl53l1x_t * v, vl53l1x_RangeStatus statu
 
    case VL53L1X_None:
       return "no update";
+   case VL53L1X_Test:
+      return "je suis dans le test";
    default:
       return "unknown status";
    }
@@ -2085,7 +2119,7 @@ const char *vl53l1x_rangeStatusToString(vl53l1x_t * v, vl53l1x_RangeStatus statu
 
 // Did a timeout occur in one of the read functions since the last call to
 // timeoutOccurred()?
-uint8_t vl53l1x_timeoutOccurred(vl53l1x_t * v)
+uint8_t vl53l1x_timeoutOccurred(vl53l1x_t *v)
 {
    uint8_t tmp = v->did_timeout;
    v->did_timeout = false;
@@ -2093,7 +2127,7 @@ uint8_t vl53l1x_timeoutOccurred(vl53l1x_t * v)
 }
 
 // read measurement results into buffer
-void vl53l1x_readResults(vl53l1x_t * v)
+void vl53l1x_readResults(vl53l1x_t *v)
 {
    uint8_t b[17];
    vl53l1x_readMulti(v, RESULT__RANGE_STATUS, b, sizeof(b));
@@ -2103,11 +2137,21 @@ void vl53l1x_readResults(vl53l1x_t * v)
    v->results.ambient_count_rate_mcps_sd0 = (b[7] << 8) | b[8];
    v->results.final_crosstalk_corrected_range_mm_sd0 = (b[13] << 8) | b[14];
    v->results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0 = (b[15] << 8) | b[16];
+   for (uint8_t i = 0; i < 17; i++)
+   {
+      printf("%02x \n", b[i]);
+   }
+   printf("Range status: %d, stream count: %d, spads: %d, ambient rate: %d, range: %d mm, signal rate: %d mcps\n",
+          v->results.range_status, v->results.stream_count,
+          v->results.dss_actual_effective_spads_sd0,
+          v->results.ambient_count_rate_mcps_sd0,
+          v->results.final_crosstalk_corrected_range_mm_sd0,
+          v->results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0);
 }
 
 // perform Dynamic SPAD Selection calculation/update
 // based on VL53L1_low_power_auto_update_DSS()
-void vl53l1x_updateDSS(vl53l1x_t * v)
+void vl53l1x_updateDSS(vl53l1x_t *v)
 {
    uint16_t spadCount = v->results.dss_actual_effective_spads_sd0;
 
@@ -2115,7 +2159,7 @@ void vl53l1x_updateDSS(vl53l1x_t * v)
    {
       // "Calc total rate per spad"
 
-      uint32_t totalRatePerSpad = (uint32_t) v->results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0 + v->results.ambient_count_rate_mcps_sd0;
+      uint32_t totalRatePerSpad = (uint32_t)v->results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0 + v->results.ambient_count_rate_mcps_sd0;
 
       // "clip to 16 bits"
       if (totalRatePerSpad > 0xFFFF)
@@ -2131,7 +2175,7 @@ void vl53l1x_updateDSS(vl53l1x_t * v)
       if (totalRatePerSpad != 0)
       {
          // "get the target rate and shift up by 16"
-         uint32_t requiredSpads = ((uint32_t) TargetRate << 16) / totalRatePerSpad;
+         uint32_t requiredSpads = ((uint32_t)TargetRate << 16) / totalRatePerSpad;
 
          // "clip to 16 bit"
          if (requiredSpads > 0xFFFF)
@@ -2157,7 +2201,7 @@ void vl53l1x_updateDSS(vl53l1x_t * v)
 
 // get range, status, rates from results buffer
 // based on VL53L1_GetRangingMeasurementData()
-void vl53l1x_getRangingData(vl53l1x_t * v)
+void vl53l1x_getRangingData(vl53l1x_t *v)
 {
    // VL53L1_copy_sys_and_core_results_to_range_results() begin
 
@@ -2167,7 +2211,7 @@ void vl53l1x_getRangingData(vl53l1x_t * v)
    // gain factor of 2011 is tuning parm default (VL53L1_TUNINGPARM_LITE_RANGING_GAIN_FACTOR_DEFAULT)
    // Basically, this appears to scale the result by 2011/2048, or about 98%
    // (with the 1024 added for proper rounding).
-   v->ranging_data.range_mm = ((uint32_t) range * 2011 + 0x0400) / 0x0800;
+   v->ranging_data.range_mm = ((uint32_t)range * 2011 + 0x0400) / 0x0800;
 
    // VL53L1_copy_sys_and_core_results_to_range_results() end
 
@@ -2175,55 +2219,57 @@ void vl53l1x_getRangingData(vl53l1x_t * v)
    // mostly based on ConvertStatusLite()
    switch (v->results.range_status)
    {
-   case 17:                    // MULTCLIPFAIL
-   case 2:                     // VCSELWATCHDOGTESTFAILURE
-   case 1:                     // VCSELCONTINUITYTESTFAILURE
-   case 3:                     // NOVHVVALUEFOUND
+   case 17: // MULTCLIPFAIL
+   case 2:  // VCSELWATCHDOGTESTFAILURE
+   case 1:  // VCSELCONTINUITYTESTFAILURE
+   case 3:  // NOVHVVALUEFOUND
       // from SetSimpleData()
       v->ranging_data.range_status = VL53L1X_HardwareFail;
       break;
 
-   case 13:                    // USERROICLIP
+   case 13: // USERROICLIP
       // from SetSimpleData()
       v->ranging_data.range_status = VL53L1X_MinRangeFail;
       break;
 
-   case 18:                    // GPHSTREAMCOUNT0READY
+   case 18: // GPHSTREAMCOUNT0READY
       v->ranging_data.range_status = VL53L1X_SynchronizationInt;
       break;
 
-   case 5:                     // RANGEPHASECHECK
+   case 5: // RANGEPHASECHECK
       v->ranging_data.range_status = VL53L1X_OutOfBoundsFail;
       break;
 
-   case 4:                     // MSRCNOTARGET
+   case 4: // MSRCNOTARGET
       v->ranging_data.range_status = VL53L1X_SignalFail;
       break;
 
-   case 6:                     // SIGMATHRESHOLDCHECK
+   case 6: // SIGMATHRESHOLDCHECK
       v->ranging_data.range_status = VL53L1X_SigmaFail;
       break;
 
-   case 7:                     // PHASECONSISTENCY
+   case 7: // PHASECONSISTENCY
       v->ranging_data.range_status = VL53L1X_WrapTargetFail;
       break;
 
-   case 12:                    // RANGEIGNORETHRESHOLD
+   case 12: // RANGEIGNORETHRESHOLD
       v->ranging_data.range_status = VL53L1X_XtalkSignalFail;
       break;
 
-   case 8:                     // MINCLIP
+   case 8: // MINCLIP
       v->ranging_data.range_status = VL53L1X_RangeValidMinRangeClipped;
       break;
 
-   case 9:                     // RANGECOMPLETE
+   case 9: // RANGECOMPLETE
       // from VL53L1_copy_sys_and_core_results_to_range_results()
       if (v->results.stream_count == 0)
          v->ranging_data.range_status = VL53L1X_RangeValidNoWrapCheckFail;
       else
          v->ranging_data.range_status = VL53L1X_RangeValid;
       break;
-
+   case 0:
+      v->ranging_data.range_status = VL53L1X_RangeValid;
+      break;
    default:
       v->ranging_data.range_status = VL53L1X_None;
    }
