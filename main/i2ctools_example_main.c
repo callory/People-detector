@@ -61,41 +61,42 @@ void app_main()
     ESP_LOGI(TAG, "Démarrage du programme");
 
     const char *err = vl53l1x_init(sensor);
+
+    vl53l1x_startContinuous(sensor, 100); // 0 pour un mode continu sans délai entre les mesures
+    ESP_LOGI(TAG, "Mode continu démarré");
+
     vl53l1x_setDistanceMode(sensor, VL53L1X_Medium); // Mode de distance
-    vl53l1x_writeReg16Bit(sensor, 0x0087, 0x40);     // Start ranging
+  
     if (err)
     {
         ESP_LOGE(TAG, "Erreur init VL53L1X: %s", err);
         return;
     }
     printf("Initialisation i2C ok\n");
-    vl53l1x_setROISize(sensor, 16,16); // FOV complet
+    vl53l1x_setROISize(sensor, 16, 16); // FOV complet
     vl53l1x_setROICenter(sensor, 199);
     printf("Configuration du capteur ok\n");
 
-    // vl53l1x_startContinuous(sensor, 0); // 0 pour un mode continu sans délai entre les mesures
-    // ESP_LOGI(TAG, "Mode continu démarré");
-    
-
     while (1)
     {
-        vl53l1x_readSingle(sensor, 1);
-    ESP_LOGI(TAG, "Mode single démarré");
+        //     vl53l1x_readSingle(sensor, 1);
+        // ESP_LOGI(TAG, "Mode single démarré");
         // uint16_t distance = vl53l0x_readRangeSingleMillimeters(sensor); // Lecture de la distance
         // ESP_LOGI(TAG, "Distance mesurée: %d mm", distance);
         // vTaskDelay(pdMS_TO_TICKS(500)); // Délai de 500 ms entre les lectures
 
         // Lecture de la distance en mode continu
-
-        // if (vl53l1x_dataReady(sensor))
-        // {
-        //     uint16_t dist = vl53l1x_read(sensor, false);
-        //     ESP_LOGI(TAG, "Distance : %d", dist);
-        // }
-        // else
-        // {
-        //     ESP_LOGW(TAG, "Donnée pas prête");
-        // }
+        uint16_t dist = vl53l1x_read(sensor, false);
+        ESP_LOGI(TAG, "Lecture Distance  avant if: %d", dist);
+        if (vl53l1x_dataReady(sensor))
+        {
+            uint16_t dist = vl53l1x_read(sensor, false);
+            ESP_LOGI(TAG, "Distance : %d", dist);
+        }
+        else
+        {
+            ESP_LOGW(TAG, "Donnée pas prête");
+        }
 
         vTaskDelay(pdMS_TO_TICKS(1000)); // Délai de 500 ms entre les lectures
     }
