@@ -1598,7 +1598,7 @@ vl53l1x_t *vl53l1x_config(int8_t port, int8_t scl, int8_t sda, int8_t xshut, uin
        .scl_io_num = scl,
        .sda_pullup_en = true,
        .scl_pullup_en = true,
-       .master.clk_speed = 100000,
+       .master.clk_speed = 400000,
    };
    if (i2c_param_config(port, &config))
    { // Config failed

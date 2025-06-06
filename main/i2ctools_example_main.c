@@ -56,10 +56,13 @@ void app_main()
     // i2c_master_init();
 
     // i2c_scan(); // Ajoute ceci ici                                                                 // Attente de 3 secondes pour s'assurer que l'I2C est prêt
-    vl53l1x_t *sensor = vl53l1x_config(I2C_NUM_0, I2C_MASTER_SCL_IO, I2C_MASTER_SDA_IO, -1, VL53L1X_ADDR, 0); // Configuration du capteur
+    vl53l1x_t *sensor = vl53l1x_config(I2C_NUM_0, I2C_MASTER_SCL_IO, I2C_MASTER_SDA_IO, -1, VL53L1X_ADDR, 1); // Configuration du capteur
 
     ESP_LOGI(TAG, "Démarrage du programme");
+  
+
     const char *err = vl53l1x_init(sensor);
+    vl53l1x_setDistanceMode(sensor, VL53L1X_Medium); // Mode de distance
     vl53l1x_writeReg16Bit(sensor, 0x0087, 0x40);  // Start ranging
     if (err)
     {
@@ -67,11 +70,12 @@ void app_main()
         return;
     }
     printf("Initialisation i2C ok\n");
-    vl53l1x_setROISize(sensor, 16, 16); // FOV complet
+    vl53l1x_setROISize(sensor, 8, 8); // FOV complet
     vl53l1x_setROICenter(sensor, 199);
     printf("Configuration du capteur ok\n");
-    vl53l1x_startContinuous(sensor, 0); // 0 pour un mode continu sans délai entre les mesures
-    ESP_LOGI(TAG, "Mode continu démarré");
+   // vl53l1x_startContinuous(sensor, 0); // 0 pour un mode continu sans délai entre les mesures
+    // ESP_LOGI(TAG, "Mode continu démarré");
+
 
     while (1)
     {
@@ -80,16 +84,18 @@ void app_main()
         // vTaskDelay(pdMS_TO_TICKS(500)); // Délai de 500 ms entre les lectures
 
         // Lecture de la distance en mode continu
+        vl53l1x_readSingle(sensor,1);
+        ESP_LOGI(TAG, "Mode single démarré");
 
-        if (vl53l1x_dataReady(sensor))
-        {
-            uint16_t dist = vl53l1x_read(sensor, false);
-            ESP_LOGI(TAG, "Distance : %d", dist);
-        }
-        else
-        {
-            ESP_LOGW(TAG, "Donnée pas prête");
-        }
+        // if (vl53l1x_dataReady(sensor))
+        // {
+        //     uint16_t dist = vl53l1x_read(sensor, false);
+        //     ESP_LOGI(TAG, "Distance : %d", dist);
+        // }
+        // else
+        // {
+        //     ESP_LOGW(TAG, "Donnée pas prête");
+        // }
 
         vTaskDelay(pdMS_TO_TICKS(1000)); // Délai de 500 ms entre les lectures
     }
