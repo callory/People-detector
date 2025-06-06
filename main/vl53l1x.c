@@ -2268,7 +2268,7 @@ void vl53l1x_getRangingData(vl53l1x_t *v)
          v->ranging_data.range_status = VL53L1X_RangeValid;
       break;
    case 0:
-      v->ranging_data.range_status = VL53L1X_RangeValid;
+      v->ranging_data.range_status = VL53L1X_Test;
       break;
    default:
       v->ranging_data.range_status = VL53L1X_None;
