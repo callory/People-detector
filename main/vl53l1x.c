@@ -1450,6 +1450,7 @@ uint8_t vl53l1x_setMeasurementTimingBudget(vl53l1x_t *v, uint32_t budget_us)
 
 uint8_t vl53l1x_dataReady(vl53l1x_t *v)
 {
+   
    return (vl53l1x_readReg(v, GPIO__TIO_HV_STATUS) & 0x01) == 0;
 }
 
