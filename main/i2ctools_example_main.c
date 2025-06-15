@@ -76,8 +76,8 @@ void app_main()
     vl53l1x_setROICenter(sensor, 199);
     printf("Configuration du capteur ok\n");
     case_e my_case = 0;
-    int counter = 0;
-    int last_zone = 0; // 0: aucune, 1: zone1, 2: zone2
+    uint8_t counter = 0;
+    uint8_t last_zone = 0; // 0: aucune, 1: zone1, 2: zone2
     bool detect1 = false;
     bool detect2 = false;
     while (1)
@@ -136,7 +136,13 @@ void app_main()
             printf("toto\n");
             counter = counter - 1;
             ESP_LOGI(TAG, "Passage zone2 -> zone1, compteur: %d", counter);
+
             last_zone = 0;
+        }
+
+        if(counter == 255)
+        {
+            counter = 0; // Empêche le compteur de devenir négatif
         }
         printf("counter: %d\n", counter);
 
