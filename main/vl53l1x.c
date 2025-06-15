@@ -2031,7 +2031,7 @@ uint16_t vl53l1x_read(vl53l1x_t *v, uint8_t blocking)
          }
       }
    }
-   printf("Data ready\n");
+   // printf("Data ready\n");
    vl53l1x_readResults(v);
    if (v->err)
       return 0;
@@ -2047,8 +2047,8 @@ uint16_t vl53l1x_read(vl53l1x_t *v, uint8_t blocking)
    vl53l1x_getRangingData(v);
 
    vl53l1x_writeReg(v, SYSTEM__INTERRUPT_CLEAR, 0x01); // sys_interrupt_clear_range
-   printf("Range status: %s\n", vl53l1x_rangeStatusToString(v, v->ranging_data.range_status));
-   printf("Range: %d mm\n", v->ranging_data.range_mm);
+   // printf("Range status: %s\n", vl53l1x_rangeStatusToString(v, v->ranging_data.range_status));
+   // printf("Range: %d mm\n", v->ranging_data.range_mm);
 
    return v->ranging_data.range_mm;
 }
