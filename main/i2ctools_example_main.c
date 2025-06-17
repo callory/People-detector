@@ -7,6 +7,7 @@
 
 #include "esp_log.h"
 #include "vl53l1x.h"
+#include "time.h"
 
 #define I2C_MASTER_SCL_IO 20      // GPIO pour SCL
 #define I2C_MASTER_SDA_IO 19      // GPIO pour SDA
@@ -25,29 +26,25 @@ typedef enum
     ZONE2_FIRST,
 } case_e;
 
-void i2c_scan()
-{
-    printf("Scan I2C en cours...\n");
-    for (uint8_t addr = 1; addr < 127; addr++)
-    {
-        i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-        i2c_master_start(cmd);
-        i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_WRITE, true);
-        i2c_master_stop(cmd);
-        esp_err_t ret = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, 50 / portTICK_PERIOD_MS);
-        i2c_cmd_link_delete(cmd);
-        if (ret == ESP_OK)
-        {
-            printf(" - Trouvé à l'adresse 0x%02X\n", addr);
-        }
-    }
-    printf("Scan I2C terminé.\n");
-}
+
+
+/**
+ * @brief Fonction principale de l'application
+ * 
+ * Cette fonction initialise le capteur VL53L1X, configure les zones de détection,
+ * et gère la logique de détection des passages entre les zones.
+ */
 void app_main()
 {
-    // i2c_master_init();
+    uint8_t center[2] = {167, 231}; // Valeurs centre zone
+    uint8_t zone = 0;
+    bool zone1 = false;
+    bool zone2 = false;
+    uint8_t counter = 0;
+    uint8_t last_zone = 0; // 0: aucune, 1: zone1, 2: zone2
+    bool detect1 = false;
+    bool detect2 = false;
 
-    // i2c_scan(); // Ajoute ceci ici                                                                 // Attente de 3 secondes pour s'assurer que l'I2C est prêt
     vl53l1x_t *sensor = vl53l1x_config(I2C_NUM_0, I2C_MASTER_SCL_IO, I2C_MASTER_SDA_IO, -1, VL53L1X_ADDR, 1); // Configuration du capteur
 
     ESP_LOGI(TAG, "Démarrage du programme");
@@ -64,22 +61,14 @@ void app_main()
         ESP_LOGE(TAG, "Erreur init VL53L1X: %s", err);
         return;
     }
-    uint8_t center[2] = {167, 231}; // Valeurs centre zone
-    uint8_t zone = 0;
-    // uint8_t counter = 0;
-    bool zone1 = false;
-    bool zone2 = false;
+
     printf("Initialisation i2C ok\n");
-    // vl53l1x_setROISize(sensor, 16, 16); // FOV complet
-    vl53l1x_setROISize(sensor, 8, 16); // FOV complet
+
+    vl53l1x_setROISize(sensor, 8, 16); // FOV complet => 16*16
 
     vl53l1x_setROICenter(sensor, 199);
     printf("Configuration du capteur ok\n");
-    case_e my_case = 0;
-    uint8_t counter = 0;
-    uint8_t last_zone = 0; // 0: aucune, 1: zone1, 2: zone2
-    bool detect1 = false;
-    bool detect2 = false;
+
     while (1)
     {
         // Zone 1
@@ -92,11 +81,7 @@ void app_main()
         vTaskDelay(pdMS_TO_TICKS(100));
         uint16_t dist2 = vl53l1x_read(sensor, false);
 
-        // Seuil de détection (ajuste si besoin)
-        // bool detect1 = dist1 <= 200 && dist1 > 0;
-        // bool detect2 = dist2 <= 200 && dist2 > 0;
-
-        if (dist1 <= 200 && dist1 > 0)
+        if (dist1 <= 400 && dist1 > 0)
         {
             detect1 = true;
         }
@@ -104,7 +89,7 @@ void app_main()
         {
             detect1 = false;
         }
-        if (dist2 <= 200 && dist2 > 0)
+        if (dist2 <= 400 && dist2 > 0)
         {
             detect2 = true;
         }
@@ -123,6 +108,7 @@ void app_main()
         }
         else if (detect2 && !detect1 && last_zone == 1)
         {
+
             counter++;
             ESP_LOGI(TAG, "Passage zone1 -> zone2, compteur: %d", counter);
             last_zone = 0;
@@ -139,12 +125,18 @@ void app_main()
 
             last_zone = 0;
         }
+        else if (!detect1 && !detect2 && last_zone !=0){
+            last_zone = 0; // Réinitialisation si aucune détection
+        }
+       
+        
 
-        if(counter == 255)
+        if (counter == 255)
         {
             counter = 0; // Empêche le compteur de devenir négatif
         }
         printf("counter: %d\n", counter);
+
 
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
