@@ -8,6 +8,7 @@
 #include "esp_log.h"
 #include "vl53l1x.h"
 #include "time.h"
+#include "people_counter.h"
 
 #define I2C_MASTER_SCL_IO 20      // GPIO pour SCL
 #define I2C_MASTER_SDA_IO 19      // GPIO pour SDA
@@ -20,11 +21,6 @@
 
 static const char *TAG = "VL53L1X";
 
-typedef enum
-{
-    ZONE1_FIRST,
-    ZONE2_FIRST,
-} case_e;
 
 
 
@@ -33,18 +29,29 @@ typedef enum
  * 
  * Cette fonction initialise le capteur VL53L1X, configure les zones de détection,
  * et gère la logique de détection des passages entre les zones.
+ * 
+ * Task FreeRTOS : my_task avec un paramètre ca reboot l'ESP32
  */
+
+ void my_task(void *pvParameters)
+{
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    const TickType_t xFrequency = pdMS_TO_TICKS(1000); // 1 seconde
+    // vl53l1x_t *sensor = (vl53l1x_t *)pvParameters; // Récupération du capteur passé en paramètre
+    while (1)
+    {
+        // Ton code à exécuter toutes les secondes
+        printf("Tâche exécutée !\n");
+        // people_counter(sensor); // Appel de la fonction de comptage de personnes
+
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+    }
+}
 void app_main()
 {
-    uint8_t center[2] = {167, 231}; // Valeurs centre zone
-    uint8_t zone = 0;
-    bool zone1 = false;
-    bool zone2 = false;
-    uint8_t counter = 0;
-    uint8_t last_zone = 0; // 0: aucune, 1: zone1, 2: zone2
-    bool detect1 = false;
-    bool detect2 = false;
-
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    const TickType_t xFrequency = pdMS_TO_TICKS(1000); // 1 seconde
+    // Initialisation du capteur VL53L1X
     vl53l1x_t *sensor = vl53l1x_config(I2C_NUM_0, I2C_MASTER_SCL_IO, I2C_MASTER_SDA_IO, -1, VL53L1X_ADDR, 1); // Configuration du capteur
 
     ESP_LOGI(TAG, "Démarrage du programme");
@@ -68,79 +75,83 @@ void app_main()
 
     vl53l1x_setROICenter(sensor, 199);
     printf("Configuration du capteur ok\n");
+    xTaskCreate(my_task,"people_counter_task",2048,NULL,5,NULL); // Création de la tâche pour le comptage de personnes
 
     while (1)
     {
-        // Zone 1
-        vl53l1x_setROICenter(sensor, center[0]);
-        vTaskDelay(pdMS_TO_TICKS(100));
-        uint16_t dist1 = vl53l1x_read(sensor, false);
+        // vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        // people_counter(sensor); 
+        // // Zone 1
+        // vl53l1x_setROICenter(sensor, center[0]);
+        // vTaskDelay(pdMS_TO_TICKS(100));
+        // uint16_t dist1 = vl53l1x_read(sensor, false);
 
-        // Zone 2
-        vl53l1x_setROICenter(sensor, center[1]);
-        vTaskDelay(pdMS_TO_TICKS(100));
-        uint16_t dist2 = vl53l1x_read(sensor, false);
+        // // Zone 2
+        // vl53l1x_setROICenter(sensor, center[1]);
+        // vTaskDelay(pdMS_TO_TICKS(100));
+        // uint16_t dist2 = vl53l1x_read(sensor, false);
 
-        if (dist1 <= 400 && dist1 > 0)
-        {
-            detect1 = true;
-        }
-        else
-        {
-            detect1 = false;
-        }
-        if (dist2 <= 400 && dist2 > 0)
-        {
-            detect2 = true;
-        }
-        else
-        {
-            detect2 = false;
-        }
-        printf("detect1: %d, detect2: %d\n", detect1, detect2);
-        // Log pour debug
-        ESP_LOGI(TAG, "dist1: %d, dist2: %d, last_zone: %d", dist1, dist2, last_zone);
+        // if (dist1 <= 400 && dist1 > 0)
+        // {
+        //     detect1 = true;
+        // }
+        // else
+        // {
+        //     detect1 = false;
+        // }
+        // if (dist2 <= 400 && dist2 > 0)
+        // {
+        //     detect2 = true;
+        // }
+        // else
+        // {
+        //     detect2 = false;
+        // }
+        // printf("detect1: %d, detect2: %d\n", detect1, detect2);
+        // // Log pour debug
+        // ESP_LOGI(TAG, "dist1: %d, dist2: %d, last_zone: %d", dist1, dist2, last_zone);
 
-        // Détection de passage
-        if (detect1 && !detect2 && last_zone != 1 && last_zone == 0)
-        {
-            last_zone = 1;
-        }
-        else if (detect2 && !detect1 && last_zone == 1)
-        {
+        // // Détection de passage
+        // if (detect1 && !detect2 && last_zone != 1 && last_zone == 0)
+        // {
+        //     last_zone = 1;
+        // }
+        // else if (detect2 && !detect1 && last_zone == 1)
+        // {
 
-            counter++;
-            ESP_LOGI(TAG, "Passage zone1 -> zone2, compteur: %d", counter);
-            last_zone = 0;
-        }
-        else if (detect2 && !detect1 && last_zone != 2 && last_zone == 0)
-        {
-            last_zone = 2;
-        }
-        else if (detect1 && !detect2 && last_zone == 2)
-        {
-            printf("toto\n");
-            counter = counter - 1;
-            ESP_LOGI(TAG, "Passage zone2 -> zone1, compteur: %d", counter);
+        //     counter++;
+        //     ESP_LOGI(TAG, "Passage zone1 -> zone2, compteur: %d", counter);
+        //     last_zone = 0;
+        // }
+        // else if (detect2 && !detect1 && last_zone != 2 && last_zone == 0)
+        // {
+        //     last_zone = 2;
+        // }
+        // else if (detect1 && !detect2 && last_zone == 2)
+        // {
+        //     printf("toto\n");
+        //     counter = counter - 1;
+        //     ESP_LOGI(TAG, "Passage zone2 -> zone1, compteur: %d", counter);
 
-            last_zone = 0;
-        }
-        else if (!detect1 && !detect2 && last_zone !=0){
-            last_zone = 0; // Réinitialisation si aucune détection
-        }
+        //     last_zone = 0;
+        // }
+        // else if (!detect1 && !detect2 && last_zone !=0){
+        //     last_zone = 0; // Réinitialisation si aucune détection
+        // }
        
         
 
-        if (counter == 255)
-        {
-            counter = 0; // Empêche le compteur de devenir négatif
-        }
-        printf("counter: %d\n", counter);
+        // if (counter == 255)
+        // {
+        //     counter = 0; // Empêche le compteur de devenir négatif
+        // }
+        // printf("counter: %d\n", counter);
 
 
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        // vTaskDelay(pdMS_TO_TICKS(1000));
     }
-
+    
     vl53l1x_stopContinuous(sensor);
     vl53l1x_end(sensor);
+
 }

@@ -20,6 +20,8 @@
         "stdint.h": "c",
         "task.h": "c",
         "esp_pm.h": "c",
-        "esp_ieee802154.h": "c"
+        "esp_ieee802154.h": "c",
+        "vl53l1x.h": "c",
+        "freertos.h": "c"
     }
 }

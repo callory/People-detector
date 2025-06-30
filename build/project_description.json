@@ -1,7 +1,7 @@
 {
     "version":            "1.1",
     "project_name":       "i2c_tools",
-    "project_version":    "ee8be2a-dirty",
+    "project_version":    "7e07195-dirty",
     "project_path":       "C:/Users/coran/SynologyDrive/Projet/i2c_tools",
     "idf_path":           "C:/Users/coran/esp/v5.3.1/esp-idf",
     "build_dir":          "C:/Users/coran/SynologyDrive/Projet/i2c_tools/build",
@@ -1225,7 +1225,7 @@
             "managed_reqs": [],
             "managed_priv_reqs": [ "cmd_nvs", "cmd_system", "cmd_wifi" ],
             "file": "C:/Users/coran/SynologyDrive/Projet/i2c_tools/build/esp-idf/main/libmain.a",
-            "sources": [ "C:/Users/coran/SynologyDrive/Projet/i2c_tools/main/vl53l1x.c", "C:/Users/coran/SynologyDrive/Projet/i2c_tools/main/vl53l0x.c", "C:/Users/coran/SynologyDrive/Projet/i2c_tools/main/i2ctools_example_main.c", "C:/Users/coran/SynologyDrive/Projet/i2c_tools/main/cmd_i2ctools.c" ],
+            "sources": [ "C:/Users/coran/SynologyDrive/Projet/i2c_tools/main/people_counter.c", "C:/Users/coran/SynologyDrive/Projet/i2c_tools/main/vl53l1x.c", "C:/Users/coran/SynologyDrive/Projet/i2c_tools/main/vl53l0x.c", "C:/Users/coran/SynologyDrive/Projet/i2c_tools/main/i2ctools_example_main.c", "C:/Users/coran/SynologyDrive/Projet/i2c_tools/main/cmd_i2ctools.c" ],
             "include_dirs": [ "." ]
         },
         "mbedtls": {
