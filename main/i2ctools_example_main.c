@@ -36,21 +36,22 @@ static const char *TAG = "VL53L1X";
  void my_task(void *pvParameters)
 {
     TickType_t xLastWakeTime = xTaskGetTickCount();
-    const TickType_t xFrequency = pdMS_TO_TICKS(1000); // 1 seconde
-    // vl53l1x_t *sensor = (vl53l1x_t *)pvParameters; // Récupération du capteur passé en paramètre
+    const TickType_t xFrequency = pdMS_TO_TICKS(2000); // 1 seconde
+    vl53l1x_t *sensor = (vl53l1x_t *)pvParameters; // Récupération du capteur passé en paramètre
     while (1)
     {
         // Ton code à exécuter toutes les secondes
         printf("Tâche exécutée !\n");
-        // people_counter(sensor); // Appel de la fonction de comptage de personnes
+        people_counter(sensor); // Appel de la fonction de comptage de personnes
+
 
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
 }
 void app_main()
 {
-    TickType_t xLastWakeTime = xTaskGetTickCount();
-    const TickType_t xFrequency = pdMS_TO_TICKS(1000); // 1 seconde
+    // TickType_t xLastWakeTime = xTaskGetTickCount();
+    // const TickType_t xFrequency = pdMS_TO_TICKS(1000); // 1 seconde
     // Initialisation du capteur VL53L1X
     vl53l1x_t *sensor = vl53l1x_config(I2C_NUM_0, I2C_MASTER_SCL_IO, I2C_MASTER_SDA_IO, -1, VL53L1X_ADDR, 1); // Configuration du capteur
 
@@ -75,10 +76,10 @@ void app_main()
 
     vl53l1x_setROICenter(sensor, 199);
     printf("Configuration du capteur ok\n");
-    xTaskCreate(my_task,"people_counter_task",2048,NULL,5,NULL); // Création de la tâche pour le comptage de personnes
+    xTaskCreate(my_task,"people_counter_task",2048, sensor,1,NULL); // Création de la tâche pour le comptage de personnes
 
-    while (1)
-    {
+    // while (1)
+    // {
         // vTaskDelayUntil(&xLastWakeTime, xFrequency);
         // people_counter(sensor); 
         // // Zone 1
@@ -149,9 +150,9 @@ void app_main()
 
 
         // vTaskDelay(pdMS_TO_TICKS(1000));
-    }
+    // }
     
-    vl53l1x_stopContinuous(sensor);
-    vl53l1x_end(sensor);
+    // vl53l1x_stopContinuous(sensor);
+    // vl53l1x_end(sensor);
 
 }
