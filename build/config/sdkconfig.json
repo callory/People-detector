@@ -1280,5 +1280,6 @@
     "WS_DYNAMIC_BUFFER": false,
     "WS_TRANSPORT": true,
     "XTAL_FREQ": 40,
-    "XTAL_FREQ_40": true
+    "XTAL_FREQ_40": true,
+    "ZB_ENABLED": false
 }

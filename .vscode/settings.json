@@ -22,6 +22,8 @@
         "esp_pm.h": "c",
         "esp_ieee802154.h": "c",
         "vl53l1x.h": "c",
-        "freertos.h": "c"
+        "freertos.h": "c",
+        "esp_zigbee_ha_standard.h": "c",
+        "esp_zb_light.h": "c"
     }
 }

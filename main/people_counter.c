@@ -6,6 +6,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+#define MEASURE_INTERVAL_MS 1000 // Intervalle de mesure en millisecondes
 case_e last_zone = ZONE_0;
 
 void people_counter(vl53l1x_t *sensor)
@@ -80,4 +81,29 @@ void people_counter(vl53l1x_t *sensor)
         counter = 0; // Empêche le compteur de devenir négatif
     }
     printf("counter: %d\n", counter);
+}
+
+
+/**
+ * @brief Fonction principale de l'application
+ * 
+ * Cette fonction initialise le capteur VL53L1X, configure les zones de détection,
+ * et gère la logique de détection des passages entre les zones.
+ * 
+ */
+
+ void RTOS_task(void *pvParameters)
+{
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    const TickType_t xFrequency = pdMS_TO_TICKS(MEASURE_INTERVAL_MS); // 1 seconde
+    vl53l1x_t *sensor = (vl53l1x_t *)pvParameters; // Récupération du capteur passé en paramètre
+    while (1)
+    {
+        // Ton code à exécuter toutes les secondes
+        printf("Tâche exécutée !\n");
+        people_counter(sensor); // Appel de la fonction de comptage de personnes
+
+
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+    }
 }

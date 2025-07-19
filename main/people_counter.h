@@ -10,4 +10,5 @@ typedef enum
     ZONE_2
 }case_e;
 void people_counter(vl53l1x_t *sensor);
+void RTOS_task(void *pvParameters);
 #endif // PEOPELE_COUNTER_H
