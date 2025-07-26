@@ -1,3 +1,7 @@
+
+#ifndef ESP_ZB_LIGHT_H
+#define ESP_ZB_LIGHT_H
+
 #include "esp_zigbee_core.h"
 
 /* Zigbee configuration */
@@ -24,5 +28,8 @@
 
 #define ESP_ZB_DEFAULT_HOST_CONFIG()                       \
     {                                                      \
-        .host_connection_mode = ZB_HOST_CONNECTION_MODE_NONE, \
+        .host_connection_mode = ZB_HOST_CONNECTION_MODE_NONE \
     }
+void esp_zb_task(void *pvParameters);
+
+#endif // ESP_ZB_LIGHT_H

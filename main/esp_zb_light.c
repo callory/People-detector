@@ -169,7 +169,7 @@ void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct)
 
 /* initialize Zigbee stack with Zigbee end-device config */
 
-static void esp_zb_task(void *pvParameters)
+void esp_zb_task(void *pvParameters)
 {
     esp_zb_cfg_t zb_nwk_cfg = ESP_ZB_ZED_CONFIG();
     esp_zb_init(&zb_nwk_cfg);
@@ -182,9 +182,9 @@ static void esp_zb_task(void *pvParameters)
     uint32_t ApplicationVersion = 0x0001;
     uint32_t StackVersion = 0x0002;
     uint32_t HWVersion = 0x0002;
-    DEFINE_PSTRING(ManufacturerName, "GammaTroniques");
-    DEFINE_PSTRING(ModelIdentifier, "ESP32-H2 Demo");
-    DEFINE_PSTRING(DateCode, "20230826");
+    DEFINE_PSTRING(ManufacturerName, "CAllory");
+    DEFINE_PSTRING(ModelIdentifier, "People_Counter");
+    DEFINE_PSTRING(DateCode, "20250726");
     // You can also use the following code to define strings:  {length, 'string'}
     // uint8_t ModelIdentifier[] = {13, 'E', 'S', 'P', '3', '2', '-', 'H', '2', ' ', 'D', 'e', 'm', 'o'};
 
@@ -203,10 +203,10 @@ static void esp_zb_task(void *pvParameters)
     esp_zb_attribute_list_t *esp_zb_identify_cluster = esp_zb_identify_cluster_create(&identify_cluster_cfg);
 
     // ------------------------------ Cluster LIGHT ------------------------------
-    esp_zb_on_off_cluster_cfg_t on_off_cfg = {
-        .on_off = 0,
-    };
-    esp_zb_attribute_list_t *esp_zb_on_off_cluster = esp_zb_on_off_cluster_create(&on_off_cfg);
+    // esp_zb_on_off_cluster_cfg_t on_off_cfg = {
+    //     .on_off = 0,
+    // };
+    // esp_zb_attribute_list_t *esp_zb_on_off_cluster = esp_zb_on_off_cluster_create(&on_off_cfg);
 
     // ------------------------------ Cluster BINARY INPUT ------------------------------
     esp_zb_binary_input_cluster_cfg_t binary_input_cfg = {
@@ -218,29 +218,29 @@ static void esp_zb_task(void *pvParameters)
     esp_zb_binary_input_cluster_add_attr(esp_zb_binary_input_cluster, ESP_ZB_ZCL_ATTR_BINARY_INPUT_PRESENT_VALUE_ID, &present_value);
 
     // ------------------------------ Cluster Temperature ------------------------------
-    esp_zb_temperature_meas_cluster_cfg_t temperature_meas_cfg = {
-        .measured_value = 0xFFFF,
-        .min_value = -50,
-        .max_value = 100,
-    };
-    esp_zb_attribute_list_t *esp_zb_temperature_meas_cluster = esp_zb_temperature_meas_cluster_create(&temperature_meas_cfg);
-
-    // ------------------------------ Cluster Humidity ------------------------------
-    esp_zb_humidity_meas_cluster_cfg_t humidity_meas_cfg = {
+    esp_zb_temperature_meas_cluster_cfg_t peopleNumber = {
         .measured_value = 0xFFFF,
         .min_value = 0,
-        .max_value = 100,
+        .max_value = 255,
     };
-    esp_zb_attribute_list_t *esp_zb_humidity_meas_cluster = esp_zb_humidity_meas_cluster_create(&humidity_meas_cfg);
+    esp_zb_attribute_list_t *esp_zb_people_number_cluster = esp_zb_temperature_meas_cluster_create(&peopleNumber);
+
+    // ------------------------------ Cluster Humidity ------------------------------
+    // esp_zb_humidity_meas_cluster_cfg_t humidity_meas_cfg = {
+    //     .measured_value = 0xFFFF,
+    //     .min_value = 0,
+    //     .max_value = 100,
+    // };
+    // esp_zb_attribute_list_t *esp_zb_humidity_meas_cluster = esp_zb_humidity_meas_cluster_create(&humidity_meas_cfg);
 
     // ------------------------------ Create cluster list ------------------------------
     esp_zb_cluster_list_t *esp_zb_cluster_list = esp_zb_zcl_cluster_list_create();
     esp_zb_cluster_list_add_basic_cluster(esp_zb_cluster_list, esp_zb_basic_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
     esp_zb_cluster_list_add_identify_cluster(esp_zb_cluster_list, esp_zb_identify_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
-    esp_zb_cluster_list_add_on_off_cluster(esp_zb_cluster_list, esp_zb_on_off_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
+    // esp_zb_cluster_list_add_on_off_cluster(esp_zb_cluster_list, esp_zb_on_off_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
     esp_zb_cluster_list_add_binary_input_cluster(esp_zb_cluster_list, esp_zb_binary_input_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
-    esp_zb_cluster_list_add_temperature_meas_cluster(esp_zb_cluster_list, esp_zb_temperature_meas_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
-    esp_zb_cluster_list_add_humidity_meas_cluster(esp_zb_cluster_list, esp_zb_humidity_meas_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
+    esp_zb_cluster_list_add_temperature_meas_cluster(esp_zb_cluster_list, esp_zb_people_number_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
+    // esp_zb_cluster_list_add_humidity_meas_cluster(esp_zb_cluster_list, esp_zb_humidity_meas_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
 
     // ------------------------------ Create endpoint list ------------------------------
     esp_zb_ep_list_t *esp_zb_ep_list = esp_zb_ep_list_create();

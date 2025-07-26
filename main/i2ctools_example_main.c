@@ -9,9 +9,10 @@
 #include "vl53l1x.h"
 #include "time.h"
 #include "people_counter.h"
-// #include "ha/esp_zigbee_ha_standard.h"
-// #include "ha/zb_ha_device_config.h"
-// #include "zcl/esp_zigbee_zcl_power_config.h"
+#include "ha/esp_zigbee_ha_standard.h"
+#include "ha/zb_ha_device_config.h"
+#include "zcl/esp_zigbee_zcl_power_config.h"
+#include "esp_zb_light.h"
 
 #define I2C_MASTER_SCL_IO 20      // GPIO pour SCL
 #define I2C_MASTER_SDA_IO 19      // GPIO pour SDA
@@ -51,5 +52,9 @@ void app_main()
     vl53l1x_setROICenter(sensor, 199);
     printf("Configuration du capteur ok\n");
     xTaskCreate(RTOS_task,"people_counter_task",2048, sensor,1,NULL); // Création de la tâche pour le comptage de personnes
+    //vTaskDelay(1000 / portTICK_PERIOD_MS); // Attente de 1 seconde pour s'assurer que le capteur est prêt
+    xTaskCreate(esp_zb_task, "Zigbee_main", 4096, NULL, 5, NULL);
+    //vTaskDelay(10000 / portTICK_PERIOD_MS); // Attente de 1 seconde pour s'assurer que le capteur est prêt
+
 
 }
