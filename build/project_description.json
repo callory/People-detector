@@ -1,7 +1,7 @@
 {
     "version":            "1.1",
     "project_name":       "i2c_tools",
-    "project_version":    "45d681b-dirty",
+    "project_version":    "a1506ec-dirty",
     "project_path":       "C:/Users/coran/SynologyDrive/Projet/i2c_tools",
     "idf_path":           "C:/Users/coran/esp/v5.3.1/esp-idf",
     "build_dir":          "C:/Users/coran/SynologyDrive/Projet/i2c_tools/build",
@@ -1061,7 +1061,7 @@
             "managed_priv_reqs": [],
             "file": "",
             "sources": [],
-            "include_dirs": []
+            "include_dirs": [ "include" ]
         },
         "espressif__esp-zigbee-lib": {
             "alias": "idf::espressif__esp-zigbee-lib",
@@ -1076,7 +1076,7 @@
             "managed_priv_reqs": [],
             "file": "",
             "sources": [],
-            "include_dirs": []
+            "include_dirs": [ "include" ]
         },
         "espressif__led_strip": {
             "alias": "idf::espressif__led_strip",
@@ -2878,7 +2878,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": []
+            "include_dirs": [ "include" ]
         },
         "espressif__esp-zigbee-lib": {
             "alias": "idf::espressif__esp-zigbee-lib",
@@ -2890,7 +2890,7 @@
             "priv_reqs": [],
             "managed_reqs": [],
             "managed_priv_reqs": [],
-            "include_dirs": []
+            "include_dirs": [ "include" ]
         },
         "espressif__led_strip": {
             "alias": "idf::espressif__led_strip",

@@ -1281,5 +1281,12 @@
     "WS_TRANSPORT": true,
     "XTAL_FREQ": 40,
     "XTAL_FREQ_40": true,
-    "ZB_ENABLED": false
+    "ZB_DEBUG_MODE": false,
+    "ZB_ENABLED": true,
+    "ZB_GP_ENABLED": true,
+    "ZB_RADIO_NATIVE": true,
+    "ZB_RADIO_SPINEL_UART": false,
+    "ZB_ZCZR": true,
+    "ZB_ZED": false,
+    "ZB_ZGPD": false
 }
