@@ -24,6 +24,7 @@
         "vl53l1x.h": "c",
         "freertos.h": "c",
         "esp_zigbee_ha_standard.h": "c",
-        "esp_zb_light.h": "c"
+        "esp_zb_light.h": "c",
+        "freertosconfig.h": "c"
     }
 }

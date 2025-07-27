@@ -5,18 +5,61 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "ha/esp_zigbee_ha_standard.h"
+#include "esp_zb_light.h"
+#include "driver/i2c.h"
 
 #define MEASURE_INTERVAL_MS 1000 // Intervalle de mesure en millisecondes
 case_e last_zone = ZONE_0;
 
-void people_counter(vl53l1x_t *sensor)
+#define I2C_MASTER_SCL_IO 20      // GPIO pour SCL
+#define I2C_MASTER_SDA_IO 19      // GPIO pour SDA
+#define I2C_MASTER_NUM I2C_NUM_0  // Numéro du port I2C
+#define I2C_MASTER_FREQ_HZ 400000 // Fréquence I2C
+#define VL53L1X_ADDR 0x29         // Adresse I2C par défaut du VL53L0X
+
+#define VL53L0X_REG_RESULT 0x14 // Registre de lecture des données
+#define VL53L0X_REG_START 0x00  // Registre de démarrage du capteur
+
+static const char *TAG = "VL53L1X";
+
+vl53l1x_t * sensorInit()
+{
+    vl53l1x_t *sensor = vl53l1x_config(I2C_NUM_0, I2C_MASTER_SCL_IO, I2C_MASTER_SDA_IO, -1, VL53L1X_ADDR, 1); // Configuration du capteur
+
+    ESP_LOGI(TAG, "Démarrage du programme");
+
+    const char *err = vl53l1x_init(sensor);
+
+    vl53l1x_startContinuous(sensor, 100); // 0 pour un mode continu sans délai entre les mesures
+    ESP_LOGI(TAG, "Mode continu démarré");
+
+    vl53l1x_setDistanceMode(sensor, VL53L1X_Long); // Mode de distance
+
+    if (err)
+    {
+        ESP_LOGE(TAG, "Erreur init VL53L1X: %s", err);
+        return NULL;
+    }
+
+    printf("Initialisation i2C ok\n");
+
+    vl53l1x_setROISize(sensor, 8, 16); // FOV complet => 16*16
+
+    vl53l1x_setROICenter(sensor, 199);
+    printf("Configuration du capteur ok\n");
+    return sensor; // Retourne le capteur initialisé
+}
+
+uint8_t people_counter(vl53l1x_t *sensor)
 {
     bool detect1 = false;
     bool detect2 = false;
     static const char *TAG = "VL53L1X";
     uint8_t center[2] = {167, 231}; // Valeurs centre zone
 
-    static uint8_t counter = 0; // Compteur de passag
+    static uint8_t counter = 0; // Compteur de passage
+
     // Zone 1
     vl53l1x_setROICenter(sensor, center[0]);
     vTaskDelay(pdMS_TO_TICKS(100));
@@ -81,29 +124,30 @@ void people_counter(vl53l1x_t *sensor)
         counter = 0; // Empêche le compteur de devenir négatif
     }
     printf("counter: %d\n", counter);
+    return counter;
 }
-
 
 /**
  * @brief Fonction principale de l'application
- * 
+ *
  * Cette fonction initialise le capteur VL53L1X, configure les zones de détection,
  * et gère la logique de détection des passages entre les zones.
- * 
+ *
  */
 
- void RTOS_task(void *pvParameters)
+void RTOS_task(void *pvParameters)
 {
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xFrequency = pdMS_TO_TICKS(MEASURE_INTERVAL_MS); // 1 seconde
-    vl53l1x_t *sensor = (vl53l1x_t *)pvParameters; // Récupération du capteur passé en paramètre
+    vl53l1x_t *sensor = (vl53l1x_t *)pvParameters;                    // Récupération du capteur passé en paramètre
     while (1)
     {
         // Ton code à exécuter toutes les secondes
         printf("Tâche exécutée !\n");
         people_counter(sensor); // Appel de la fonction de comptage de personnes
+        // esp_zb_task(NULL); // Appel de la tâche Zigbee, si nécessaire
 
-
+        // xTaskCreate(esp_zb_task, "Zigbee_main", 4096, NULL, 5, NULL);
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
 }

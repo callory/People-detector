@@ -8,9 +8,11 @@
 #include "esp_zb_light.h"
 #include "string.h"
 #include "driver/gpio.h"
-
+#include "vl53l1x.h"
+#include "people_counter.h"
 
 static const char *TAG = "DEMO";
+vl53l1x_t *sensor = NULL;
 
 #define DEFINE_PSTRING(var, str)   \
     const struct                   \
@@ -149,12 +151,14 @@ void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct)
                      extended_pan_id[7], extended_pan_id[6], extended_pan_id[5], extended_pan_id[4],
                      extended_pan_id[3], extended_pan_id[2], extended_pan_id[1], extended_pan_id[0],
                      esp_zb_get_pan_id(), esp_zb_get_current_channel());
-            xTaskCreate(button_task, "button_task", 4096, NULL, 5, NULL);
+            //xTaskCreate(button_task, "button_task", 4096, NULL, 5, NULL);
+            xTaskCreate(RTOS_task, "people_counter_task", 2048, sensor, 1, NULL); // Création de la tâche pour le comptage de personnes
+
             // xTaskCreate(dht22_task, "dht22_task", 4096, NULL, 5, NULL);
         }
         else
         {
-            printf("titi");
+
             ESP_LOGI(TAG, "Network steering was not successful (status: %s)", esp_err_to_name(err_status));
             esp_zb_scheduler_alarm((esp_zb_callback_t)bdb_start_top_level_commissioning_cb, ESP_ZB_BDB_MODE_NETWORK_STEERING, 1000);
         }
@@ -166,13 +170,13 @@ void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct)
     }
 }
 
-
 /* initialize Zigbee stack with Zigbee end-device config */
 
 void esp_zb_task(void *pvParameters)
 {
     esp_zb_cfg_t zb_nwk_cfg = ESP_ZB_ZED_CONFIG();
     esp_zb_init(&zb_nwk_cfg);
+    sensor = sensorInit(); // Initialize the VL53L1X sensor
 
     // ------------------------------ Cluster BASIC ------------------------------
     esp_zb_basic_cluster_cfg_t basic_cluster_cfg = {
