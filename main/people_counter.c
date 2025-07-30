@@ -140,12 +140,23 @@ void RTOS_task(void *pvParameters)
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xFrequency = pdMS_TO_TICKS(MEASURE_INTERVAL_MS); // 1 seconde
     vl53l1x_t *sensor = (vl53l1x_t *)pvParameters;                    // Récupération du capteur passé en paramètre
+    uint8_t lastPeopleCount = 0; // Dernier nombre de personnes comptées
     while (1)
     {
         // Ton code à exécuter toutes les secondes
         printf("Tâche exécutée !\n");
-        people_counter(sensor); // Appel de la fonction de comptage de personnes
+        uint8_t peopleCounter = people_counter(sensor); // Appel de la fonction de comptage de personnes
         // esp_zb_task(NULL); // Appel de la tâche Zigbee, si nécessaire
+        if (peopleCounter != lastPeopleCount)
+        {
+            ESP_LOGI(TAG, "Nombre de personnes détectées: %d", peopleCounter);
+            // reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT, ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID, &peopleCounter, 1);
+            reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_ANALOG_INPUT, 0x00, &peopleCounter, 1);
+
+            lastPeopleCount = peopleCounter; // Mise à jour du dernier nombre de personnes comptées
+        }
+        // reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_BINARY_INPUT, ESP_ZB_ZCL_ATTR_BINARY_INPUT_PRESENT_VALUE_ID, &button_state, 1);
+
 
         // xTaskCreate(esp_zb_task, "Zigbee_main", 4096, NULL, 5, NULL);
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
