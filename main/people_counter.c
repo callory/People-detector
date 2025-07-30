@@ -151,7 +151,7 @@ void RTOS_task(void *pvParameters)
         {
             ESP_LOGI(TAG, "Nombre de personnes détectées: %d", peopleCounter);
             // reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT, ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID, &peopleCounter, 1);
-            reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_ANALOG_INPUT, 0x00, &peopleCounter, 1);
+            reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_ANALOG_INPUT, ESP_ZB_ZCL_ATTR_ANALOG_INPUT_PRESENT_VALUE_ID, &peopleCounter, 1);
 
             lastPeopleCount = peopleCounter; // Mise à jour du dernier nombre de personnes comptées
         }
