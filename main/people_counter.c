@@ -9,7 +9,7 @@
 #include "esp_zb_light.h"
 #include "driver/i2c.h"
 
-#define MEASURE_INTERVAL_MS 1000 // Intervalle de mesure en millisecondes
+#define MEASURE_INTERVAL_MS 5000 // Intervalle de mesure en millisecondes
 case_e last_zone = ZONE_0;
 
 #define I2C_MASTER_SCL_IO 20      // GPIO pour SCL
@@ -86,7 +86,7 @@ uint8_t people_counter(vl53l1x_t *sensor)
     {
         detect2 = false;
     }
-    printf("detect1: %d, detect2: %d\n", detect1, detect2);
+    // printf("detect1: %d, detect2: %d\n", detect1, detect2);
     // Log pour debug
     ESP_LOGI(TAG, "dist1: %d, dist2: %d, last_zone: %d", dist1, dist2, last_zone);
 
@@ -108,7 +108,7 @@ uint8_t people_counter(vl53l1x_t *sensor)
     }
     else if (detect1 && !detect2 && last_zone == ZONE_2)
     {
-        printf("toto\n");
+        // printf("toto\n");
         counter = counter - 1;
         ESP_LOGI(TAG, "Passage zone2 -> zone1, compteur: %d", counter);
 
@@ -146,6 +146,7 @@ void RTOS_task(void *pvParameters)
         // Ton code à exécuter toutes les secondes
         printf("Tâche exécutée !\n");
         uint8_t peopleCounter = people_counter(sensor); // Appel de la fonction de comptage de personnes
+        // peopleCounter++;
         // esp_zb_task(NULL); // Appel de la tâche Zigbee, si nécessaire
         if (peopleCounter != lastPeopleCount)
         {
@@ -154,6 +155,9 @@ void RTOS_task(void *pvParameters)
             reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_ANALOG_INPUT, ESP_ZB_ZCL_ATTR_ANALOG_INPUT_PRESENT_VALUE_ID, &peopleCounter, 1);
 
             lastPeopleCount = peopleCounter; // Mise à jour du dernier nombre de personnes comptées
+        }else{
+            printf("Aucun changement dans le nombre de personnes.\n");
+            lastPeopleCount = 1;
         }
         // reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_BINARY_INPUT, ESP_ZB_ZCL_ATTR_BINARY_INPUT_PRESENT_VALUE_ID, &button_state, 1);
 
