@@ -31,6 +31,6 @@
         .host_connection_mode = ZB_HOST_CONNECTION_MODE_NONE \
     }
 void esp_zb_task(void *pvParameters);
-void reportAttribute(uint8_t endpoint, uint16_t clusterID, uint16_t attributeID, void *value, uint8_t value_length);
+void reportAttribute(uint8_t endpoint, uint16_t clusterID, uint16_t attributeID, uint8_t *value, uint8_t value_length);
 
 #endif // ESP_ZB_LIGHT_H

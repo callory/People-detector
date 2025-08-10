@@ -21,9 +21,9 @@ vl53l1x_t *sensor = NULL;
         char content[sizeof(str)]; \
     }(var) = {sizeof(str) - 1, (str)}
 
-void reportAttribute(uint8_t endpoint, uint16_t clusterID, uint16_t attributeID, void *value, uint8_t value_length)
+void reportAttribute(uint8_t endpoint, uint16_t clusterID, uint16_t attributeID, uint8_t *value, uint8_t value_length)
 {
-    esp_zb_zcl_report_attr_cmd_t cmd = {
+    esp_zb_zcl_read_attr_cmd_t cmd = {
         .zcl_basic_cmd = {
             .dst_addr_u.addr_short = 0x0000,
             .dst_endpoint = endpoint,
@@ -31,10 +31,9 @@ void reportAttribute(uint8_t endpoint, uint16_t clusterID, uint16_t attributeID,
         },
         .address_mode = ESP_ZB_APS_ADDR_MODE_16_ENDP_PRESENT,
         .clusterID = clusterID,
-        .attributeID = attributeID
-        // .cluster_role = ESP_ZB_ZCL_CLUSTER_SERVER_ROLE,
-    };
+        .attr_field = attributeID};
     esp_zb_zcl_attr_t *value_r = esp_zb_zcl_get_attribute(endpoint, clusterID, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, attributeID);
+
     memcpy(value_r->data_p, value, value_length);
     esp_zb_zcl_report_attr_cmd_req(&cmd);
 }
@@ -151,7 +150,7 @@ void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct)
                      extended_pan_id[7], extended_pan_id[6], extended_pan_id[5], extended_pan_id[4],
                      extended_pan_id[3], extended_pan_id[2], extended_pan_id[1], extended_pan_id[0],
                      esp_zb_get_pan_id(), esp_zb_get_current_channel());
-            //xTaskCreate(button_task, "button_task", 4096, NULL, 5, NULL);
+            // xTaskCreate(button_task, "button_task", 4096, NULL, 5, NULL);
             xTaskCreate(RTOS_task, "people_counter_task", 2048, sensor, 1, NULL); // Création de la tâche pour le comptage de personnes
 
             // xTaskCreate(dht22_task, "dht22_task", 4096, NULL, 5, NULL);
@@ -222,17 +221,14 @@ void esp_zb_task(void *pvParameters)
     // esp_zb_binary_input_cluster_add_attr(esp_zb_binary_input_cluster, ESP_ZB_ZCL_ATTR_BINARY_INPUT_PRESENT_VALUE_ID, &present_value);
 
     // ------------------------------ Cluster Temperature ------------------------------
-    
-    esp_zb_analog_input_cluster_cfg_t peopleNumber = {
-        .out_of_service = ESP_ZB_ZCL_ANALOG_INPUT_OUT_OF_SERVICE_DEFAULT_VALUE,
-        .status_flags = ESP_ZB_ZCL_ANALOG_INPUT_STATUS_FLAG_DEFAULT_VALUE,
-        .present_value = 0x00
 
-    };
-    esp_zb_attribute_list_t *esp_zb_people_number_cluster = esp_zb_analog_input_cluster_create(&peopleNumber);
-;
+    esp_zb_temperature_meas_cluster_cfg_t peopleNumber = {
+        .max_value = 255,
+        .min_value = 0,
+        .measured_value = 0x00};
+    esp_zb_attribute_list_t *esp_zb_people_number_cluster = esp_zb_temperature_meas_cluster_create(&peopleNumber);
+    ;
 
-    
     // ------------------------------ Cluster Humidity ------------------------------
     // esp_zb_humidity_meas_cluster_cfg_t humidity_meas_cfg = {
     //     .measured_value = 0xFFFF,
@@ -248,9 +244,35 @@ void esp_zb_task(void *pvParameters)
     // esp_zb_cluster_list_add_on_off_cluster(esp_zb_cluster_list, esp_zb_on_off_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
     // esp_zb_cluster_list_add_binary_input_cluster(esp_zb_cluster_list, esp_zb_binary_input_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
     // esp_zb_cluster_list_add_temperature_meas_cluster(esp_zb_cluster_list, esp_zb_people_number_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
-    esp_zb_cluster_list_add_analog_input_cluster(esp_zb_cluster_list, esp_zb_people_number_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
+    esp_zb_cluster_list_add_temperature_meas_cluster(esp_zb_cluster_list, esp_zb_people_number_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
     // esp_zb_cluster_list_add_humidity_meas_cluster(esp_zb_cluster_list, esp_zb_humidity_meas_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
+    // ------------------------------ Create report cluster ------------------------------
+    // esp_err_t rc = esp_zb_zcl_report_attr_add(
+    //     HA_ESP_LIGHT_ENDPOINT,
+    //     ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT,
+    //     ESP_ZB_ZCL_CLUSTER_SERVER_ROLE,
+    //     ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID);
+    // ESP_LOGI(TAG, "Report attr add returned %d (%s)", rc, esp_err_to_name(rc));
+    // 🔹 Configurer le reporting (après l’avoir ajouté)
+    esp_zb_zcl_reporting_info_t reporting_cfg = {
+        .dst = {
+            .endpoint = HA_ESP_LIGHT_ENDPOINT,
+        },
+        .u = {
+            .send_info = {
+                .min_interval = 0,  // envoie immédiatement si changement
+                .max_interval = 60, // envoie au moins toutes les 60s
+            },
+        },
+        // .endpoint = HA_ESP_LIGHT_ENDPOINT,
+        .cluster_id = ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT,
+        .cluster_role = ESP_ZB_ZCL_CLUSTER_SERVER_ROLE,
+        .attr_id = ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID,
 
+        // .reportable_change = 1*
+    };
+    esp_err_t rc2 = esp_zb_zcl_update_reporting_info(&reporting_cfg);
+    ESP_LOGI(TAG, "Update reporting returned %d (%s)", rc2, esp_err_to_name(rc2));
     // ------------------------------ Create endpoint list ------------------------------
     esp_zb_ep_list_t *esp_zb_ep_list = esp_zb_ep_list_create();
     esp_zb_endpoint_config_t endpoint_config = {

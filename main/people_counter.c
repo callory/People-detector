@@ -23,7 +23,7 @@ case_e last_zone = ZONE_0;
 
 static const char *TAG = "VL53L1X";
 
-vl53l1x_t * sensorInit()
+vl53l1x_t *sensorInit()
 {
     vl53l1x_t *sensor = vl53l1x_config(I2C_NUM_0, I2C_MASTER_SCL_IO, I2C_MASTER_SDA_IO, -1, VL53L1X_ADDR, 1); // Configuration du capteur
 
@@ -140,29 +140,38 @@ void RTOS_task(void *pvParameters)
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xFrequency = pdMS_TO_TICKS(MEASURE_INTERVAL_MS); // 1 seconde
     vl53l1x_t *sensor = (vl53l1x_t *)pvParameters;                    // Récupération du capteur passé en paramètre
-    uint8_t lastPeopleCount = 0; // Dernier nombre de personnes comptées
+    uint8_t lastPeopleCount = 0;                                      // Dernier nombre de personnes comptées
+    uint16_t peopleCounter = 0;
+
     while (1)
     {
         // Ton code à exécuter toutes les secondes
         printf("Tâche exécutée !\n");
-        uint8_t peopleCounter = people_counter(sensor); // Appel de la fonction de comptage de personnes
+        uint16_t peopleCounter =( peopleCounter + 1) *100;
+        if(peopleCounter > 255)
+        {
+            peopleCounter = 0; // Réinitialisation si le compteur dépasse 255
+        }
+        //(uint16_t) people_counter(sensor); // Appel de la fonction de comptage de personnes
         // peopleCounter++;
         // esp_zb_task(NULL); // Appel de la tâche Zigbee, si nécessaire
         if (peopleCounter != lastPeopleCount)
         {
             ESP_LOGI(TAG, "Nombre de personnes détectées: %d", peopleCounter);
             // reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT, ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID, &peopleCounter, 1);
-            reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_ANALOG_INPUT, ESP_ZB_ZCL_ATTR_ANALOG_INPUT_PRESENT_VALUE_ID, &peopleCounter, 1);
+            reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT, ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID, &peopleCounter, 2);
 
             lastPeopleCount = peopleCounter; // Mise à jour du dernier nombre de personnes comptées
-        }else{
+        }
+        else
+        {
             printf("Aucun changement dans le nombre de personnes.\n");
             lastPeopleCount = 1;
         }
         // reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_BINARY_INPUT, ESP_ZB_ZCL_ATTR_BINARY_INPUT_PRESENT_VALUE_ID, &button_state, 1);
 
-
         // xTaskCreate(esp_zb_task, "Zigbee_main", 4096, NULL, 5, NULL);
-        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        // vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        vTaskDelay(xFrequency); // Attendre l'intervalle défini avant la prochaine exécution
     }
 }

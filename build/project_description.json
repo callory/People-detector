@@ -1,7 +1,7 @@
 {
     "version":            "1.1",
     "project_name":       "i2c_tools",
-    "project_version":    "7d55011-dirty",
+    "project_version":    "118608f-dirty",
     "project_path":       "C:/Users/coran/SynologyDrive/Projet/i2c_tools",
     "idf_path":           "C:/Users/coran/esp/v5.3.1/esp-idf",
     "build_dir":          "C:/Users/coran/SynologyDrive/Projet/i2c_tools/build",
