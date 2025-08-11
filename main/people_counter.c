@@ -147,8 +147,8 @@ void RTOS_task(void *pvParameters)
     {
         // Ton code à exécuter toutes les secondes
         printf("Tâche exécutée !\n");
-        uint16_t peopleCounter =( peopleCounter + 1) *100;
-        if(peopleCounter > 255)
+        uint16_t peopleCounter = (peopleCounter + 1) * 100;
+        if (peopleCounter > 255)
         {
             peopleCounter = 0; // Réinitialisation si le compteur dépasse 255
         }
@@ -160,7 +160,11 @@ void RTOS_task(void *pvParameters)
             ESP_LOGI(TAG, "Nombre de personnes détectées: %d", peopleCounter);
             // reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT, ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID, &peopleCounter, 1);
             reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT, ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID, &peopleCounter, 2);
-
+            //esp_zb_lock_acquire(portMAX_DELAY);
+            //esp_zb_zcl_set_attribute_val(HA_ESP_LIGHT_ENDPOINT,
+              //                           ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE,
+                //                         ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID, &peopleCounter, false);
+            //esp_zb_lock_release();
             lastPeopleCount = peopleCounter; // Mise à jour du dernier nombre de personnes comptées
         }
         else

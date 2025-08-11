@@ -23,19 +23,24 @@ vl53l1x_t *sensor = NULL;
 
 void reportAttribute(uint8_t endpoint, uint16_t clusterID, uint16_t attributeID, uint8_t *value, uint8_t value_length)
 {
-    esp_zb_zcl_read_attr_cmd_t cmd = {
+    esp_zb_zcl_report_attr_cmd_t cmd = {
         .zcl_basic_cmd = {
-            .dst_addr_u.addr_short = 0x0000,
-            .dst_endpoint = endpoint,
+            //.dst_addr_u.addr_short = 0x0000,
+            //.dst_endpoint = endpoint,
             .src_endpoint = endpoint,
         },
-        .address_mode = ESP_ZB_APS_ADDR_MODE_16_ENDP_PRESENT,
+        .address_mode =  ESP_ZB_APS_ADDR_MODE_16_ENDP_PRESENT,
         .clusterID = clusterID,
-        .attr_field = attributeID};
+        .direction = ESP_ZB_ZCL_CMD_DIRECTION_TO_CLI,
+        .attributeID = attributeID};
     esp_zb_zcl_attr_t *value_r = esp_zb_zcl_get_attribute(endpoint, clusterID, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, attributeID);
 
     memcpy(value_r->data_p, value, value_length);
+    esp_zb_lock_acquire(portMAX_DELAY);
+
     esp_zb_zcl_report_attr_cmd_req(&cmd);
+    esp_zb_lock_release();
+    ESP_EARLY_LOGI(TAG, "Send 'report attributes' command");
 }
 void button_task(void *pvParameters)
 {
@@ -227,7 +232,6 @@ void esp_zb_task(void *pvParameters)
         .min_value = 0,
         .measured_value = 0x00};
     esp_zb_attribute_list_t *esp_zb_people_number_cluster = esp_zb_temperature_meas_cluster_create(&peopleNumber);
-    ;
 
     // ------------------------------ Cluster Humidity ------------------------------
     // esp_zb_humidity_meas_cluster_cfg_t humidity_meas_cfg = {
@@ -246,33 +250,7 @@ void esp_zb_task(void *pvParameters)
     // esp_zb_cluster_list_add_temperature_meas_cluster(esp_zb_cluster_list, esp_zb_people_number_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
     esp_zb_cluster_list_add_temperature_meas_cluster(esp_zb_cluster_list, esp_zb_people_number_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
     // esp_zb_cluster_list_add_humidity_meas_cluster(esp_zb_cluster_list, esp_zb_humidity_meas_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
-    // ------------------------------ Create report cluster ------------------------------
-    // esp_err_t rc = esp_zb_zcl_report_attr_add(
-    //     HA_ESP_LIGHT_ENDPOINT,
-    //     ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT,
-    //     ESP_ZB_ZCL_CLUSTER_SERVER_ROLE,
-    //     ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID);
-    // ESP_LOGI(TAG, "Report attr add returned %d (%s)", rc, esp_err_to_name(rc));
-    // 🔹 Configurer le reporting (après l’avoir ajouté)
-    esp_zb_zcl_reporting_info_t reporting_cfg = {
-        .dst = {
-            .endpoint = HA_ESP_LIGHT_ENDPOINT,
-        },
-        .u = {
-            .send_info = {
-                .min_interval = 0,  // envoie immédiatement si changement
-                .max_interval = 60, // envoie au moins toutes les 60s
-            },
-        },
-        // .endpoint = HA_ESP_LIGHT_ENDPOINT,
-        .cluster_id = ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT,
-        .cluster_role = ESP_ZB_ZCL_CLUSTER_SERVER_ROLE,
-        .attr_id = ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID,
 
-        // .reportable_change = 1*
-    };
-    esp_err_t rc2 = esp_zb_zcl_update_reporting_info(&reporting_cfg);
-    ESP_LOGI(TAG, "Update reporting returned %d (%s)", rc2, esp_err_to_name(rc2));
     // ------------------------------ Create endpoint list ------------------------------
     esp_zb_ep_list_t *esp_zb_ep_list = esp_zb_ep_list_create();
     esp_zb_endpoint_config_t endpoint_config = {
@@ -285,6 +263,25 @@ void esp_zb_task(void *pvParameters)
 
     // ------------------------------ Register Device ------------------------------
     esp_zb_device_register(esp_zb_ep_list);
+
+    /* Config the reporting info  */
+    esp_zb_zcl_reporting_info_t reporting_info = {
+        .direction = ESP_ZB_ZCL_CMD_DIRECTION_TO_SRV,
+        .ep = HA_ESP_LIGHT_ENDPOINT,
+        .cluster_id = ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT,
+        .cluster_role = ESP_ZB_ZCL_CLUSTER_SERVER_ROLE,
+        .dst.profile_id = ESP_ZB_AF_HA_PROFILE_ID,
+        .u.send_info.min_interval = 1,
+        .u.send_info.max_interval = 0,
+        .u.send_info.def_min_interval = 1,
+        .u.send_info.def_max_interval = 0,
+        .u.send_info.delta.u16 = 100,
+        .attr_id = ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID,
+        .manuf_code = ESP_ZB_ZCL_ATTR_NON_MANUFACTURER_SPECIFIC,
+    };
+
+    esp_zb_zcl_update_reporting_info(&reporting_info);
+
     esp_zb_core_action_handler_register(zb_action_handler);
     esp_zb_set_primary_network_channel_set(ESP_ZB_PRIMARY_CHANNEL_MASK);
 
