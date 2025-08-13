@@ -25,8 +25,8 @@ void reportAttribute(uint8_t endpoint, uint16_t clusterID, uint16_t attributeID,
 {
     esp_zb_zcl_report_attr_cmd_t cmd = {
         .zcl_basic_cmd = {
-            //.dst_addr_u.addr_short = 0x0000,
-            //.dst_endpoint = endpoint,
+            .dst_addr_u.addr_short = 0x0000,
+            .dst_endpoint = 1,
             .src_endpoint = endpoint,
         },
         .address_mode =  ESP_ZB_APS_ADDR_MODE_16_ENDP_PRESENT,
@@ -228,7 +228,7 @@ void esp_zb_task(void *pvParameters)
     // ------------------------------ Cluster Temperature ------------------------------
 
     esp_zb_temperature_meas_cluster_cfg_t peopleNumber = {
-        .max_value = 255,
+        .max_value = 30000,
         .min_value = 0,
         .measured_value = 0x00};
     esp_zb_attribute_list_t *esp_zb_people_number_cluster = esp_zb_temperature_meas_cluster_create(&peopleNumber);
@@ -271,10 +271,10 @@ void esp_zb_task(void *pvParameters)
         .cluster_id = ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT,
         .cluster_role = ESP_ZB_ZCL_CLUSTER_SERVER_ROLE,
         .dst.profile_id = ESP_ZB_AF_HA_PROFILE_ID,
-        .u.send_info.min_interval = 1,
-        .u.send_info.max_interval = 0,
-        .u.send_info.def_min_interval = 1,
-        .u.send_info.def_max_interval = 0,
+            // .u.send_info.min_interval = 1,
+            // .u.send_info.max_interval = 0,
+            // .u.send_info.def_min_interval = 1,
+            // .u.send_info.def_max_interval = 0,
         .u.send_info.delta.u16 = 100,
         .attr_id = ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID,
         .manuf_code = ESP_ZB_ZCL_ATTR_NON_MANUFACTURER_SPECIFIC,
@@ -286,7 +286,8 @@ void esp_zb_task(void *pvParameters)
     esp_zb_set_primary_network_channel_set(ESP_ZB_PRIMARY_CHANNEL_MASK);
 
     ESP_ERROR_CHECK(esp_zb_start(false));
-    esp_zb_main_loop_iteration();
+    // esp_zb_main_loop_iteration();
+    esp_zb_stack_main_loop();
 }
 
 // void app_main(void)

@@ -9,7 +9,7 @@
 #include "esp_zb_light.h"
 #include "driver/i2c.h"
 
-#define MEASURE_INTERVAL_MS 5000 // Intervalle de mesure en millisecondes
+#define MEASURE_INTERVAL_MS 10000 // Intervalle de mesure en millisecondes
 case_e last_zone = ZONE_0;
 
 #define I2C_MASTER_SCL_IO 20      // GPIO pour SCL
@@ -147,8 +147,9 @@ void RTOS_task(void *pvParameters)
     {
         // Ton code à exécuter toutes les secondes
         printf("Tâche exécutée !\n");
-        uint16_t peopleCounter = (peopleCounter + 1) * 100;
-        if (peopleCounter > 255)
+        peopleCounter = (peopleCounter + 10);
+        uint16_t test = peopleCounter *100;
+        if (peopleCounter == 60000)
         {
             peopleCounter = 0; // Réinitialisation si le compteur dépasse 255
         }
@@ -157,9 +158,9 @@ void RTOS_task(void *pvParameters)
         // esp_zb_task(NULL); // Appel de la tâche Zigbee, si nécessaire
         if (peopleCounter != lastPeopleCount)
         {
-            ESP_LOGI(TAG, "Nombre de personnes détectées: %d", peopleCounter);
+            ESP_LOGI(TAG, "Nombre de personnes détectées: %d", test);
             // reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT, ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID, &peopleCounter, 1);
-            reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT, ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID, &peopleCounter, 2);
+            reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT, ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID, &test, 2);
             //esp_zb_lock_acquire(portMAX_DELAY);
             //esp_zb_zcl_set_attribute_val(HA_ESP_LIGHT_ENDPOINT,
               //                           ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE,
