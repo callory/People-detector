@@ -1645,7 +1645,7 @@ const char *vl53l1x_init(vl53l1x_t *v)
    // check model ID and module type registers (values specified in datasheet)
    if (vl53l1x_readReg16Bit(v, IDENTIFICATION__MODEL_ID) != 0xEACC)
    {
-      printf("Not VL53L1X");
+      
       return "Not VL53L1X";
    }
 

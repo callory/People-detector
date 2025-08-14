@@ -29,7 +29,7 @@ void reportAttribute(uint8_t endpoint, uint16_t clusterID, uint16_t attributeID,
             .dst_endpoint = 1,
             .src_endpoint = endpoint,
         },
-        .address_mode =  ESP_ZB_APS_ADDR_MODE_16_ENDP_PRESENT,
+        .address_mode = ESP_ZB_APS_ADDR_MODE_16_ENDP_PRESENT,
         .clusterID = clusterID,
         .direction = ESP_ZB_ZCL_CMD_DIRECTION_TO_CLI,
         .attributeID = attributeID};
@@ -149,6 +149,13 @@ void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct)
         if (err_status == ESP_OK)
         {
             printf("toto");
+            sensor = sensorInit(); // Initialize the VL53L1X sensor
+
+            if (sensor == NULL)
+            {
+                ESP_LOGE(TAG, "VL53L1X sensor not initialized");
+                return;
+            }
             esp_zb_ieee_addr_t extended_pan_id;
             esp_zb_get_extended_pan_id(extended_pan_id);
             ESP_LOGI(TAG, "Joined network successfully (Extended PAN ID: %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x, PAN ID: 0x%04hx, Channel:%d)",
@@ -180,7 +187,6 @@ void esp_zb_task(void *pvParameters)
 {
     esp_zb_cfg_t zb_nwk_cfg = ESP_ZB_ZED_CONFIG();
     esp_zb_init(&zb_nwk_cfg);
-    sensor = sensorInit(); // Initialize the VL53L1X sensor
 
     // ------------------------------ Cluster BASIC ------------------------------
     esp_zb_basic_cluster_cfg_t basic_cluster_cfg = {
@@ -286,7 +292,7 @@ void esp_zb_task(void *pvParameters)
     esp_zb_set_primary_network_channel_set(ESP_ZB_PRIMARY_CHANNEL_MASK);
 
     ESP_ERROR_CHECK(esp_zb_start(false));
-    // esp_zb_main_loop_iteration(); // envoie que la première valeur a ha 
+    // esp_zb_main_loop_iteration(); // envoie que la première valeur a ha
     esp_zb_stack_main_loop(); // envoie tout le tps
 }
 
