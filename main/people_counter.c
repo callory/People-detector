@@ -70,7 +70,7 @@ uint8_t people_counter(vl53l1x_t *sensor)
     vTaskDelay(pdMS_TO_TICKS(100));
     uint16_t dist2 = vl53l1x_read(sensor, false);
 
-    if (dist1 <= 400 && dist1 > 0)
+    if (dist1 <= 1200 && dist1 > 0)
     {
         detect1 = true;
     }
@@ -78,7 +78,7 @@ uint8_t people_counter(vl53l1x_t *sensor)
     {
         detect1 = false;
     }
-    if (dist2 <= 400 && dist2 > 0)
+    if (dist2 <= 1200 && dist2 > 0)
     {
         detect2 = true;
     }
@@ -127,14 +127,6 @@ uint8_t people_counter(vl53l1x_t *sensor)
     return counter;
 }
 
-/**
- * @brief Fonction principale de l'application
- *
- * Cette fonction initialise le capteur VL53L1X, configure les zones de détection,
- * et gère la logique de détection des passages entre les zones.
- *
- */
-
 void RTOS_task(void *pvParameters)
 {
     TickType_t xLastWakeTime = xTaskGetTickCount();
@@ -153,7 +145,7 @@ void RTOS_task(void *pvParameters)
         // {
         // peopleCounter = 0; // Réinitialisation si le compteur dépasse 255
         // }
-        uint16_t peopleCounter = people_counter(sensor) *100; // Appel de la fonction de comptage de personnes
+        uint16_t peopleCounter = people_counter(sensor) * 100; // Appel de la fonction de comptage de personnes
         // peopleCounter++;
         // esp_zb_task(NULL); // Appel de la tâche Zigbee, si nécessaire
         if (peopleCounter != lastPeopleCount)
@@ -167,10 +159,10 @@ void RTOS_task(void *pvParameters)
         else
         {
             printf("Aucun changement dans le nombre de personnes.\n");
-            //lastPeopleCount = 1;
+            // lastPeopleCount = 1;
         }
 
         // vTaskDelayUntil(&xLastWakeTime, xFrequency);
-        vTaskDelay(xFrequency); // Attendre l'intervalle défini avant la prochaine exécution
+        // vTaskDelay(xFrequency); // Attendre l'intervalle défini avant la prochaine exécution
     }
 }
