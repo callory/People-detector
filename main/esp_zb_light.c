@@ -42,40 +42,6 @@ void reportAttribute(uint8_t endpoint, uint16_t clusterID, uint16_t attributeID,
     esp_zb_lock_release();
     ESP_EARLY_LOGI(TAG, "Send 'report attributes' command");
 }
-void button_task(void *pvParameters)
-{
-    uint8_t last_state = 0;
-    while (1)
-    {
-        uint8_t button_state = gpio_get_level(GPIO_NUM_12);
-        if (button_state != last_state)
-        {
-            ESP_LOGI(TAG, "Button changed: %d", button_state);
-            last_state = button_state;
-            reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_BINARY_INPUT, ESP_ZB_ZCL_ATTR_BINARY_INPUT_PRESENT_VALUE_ID, &button_state, 1);
-        }
-        vTaskDelay(100 / portTICK_PERIOD_MS);
-    }
-}
-// void dht22_task(void *pvParameters)
-// {
-//     while (1)
-//     {
-//         setDHTgpio(GPIO_NUM_8);
-//         int ret = readDHT();
-//         if (ret != DHT_OK)
-//             errorHandler(ret);
-//         else
-//         {
-//             ESP_LOGI(TAG, "Hum: %.1f Tmp: %.1f", getHumidity(), getTemperature());
-//             uint16_t temperature = (uint16_t)(getTemperature() * 100);
-//             uint16_t humidity = (uint16_t)(getHumidity() * 100);
-//             reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT, ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID, &temperature, 2);
-//             reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_REL_HUMIDITY_MEASUREMENT, ESP_ZB_ZCL_ATTR_REL_HUMIDITY_MEASUREMENT_VALUE_ID, &humidity, 2);
-//         }
-//         vTaskDelay(5000 / portTICK_PERIOD_MS);
-//     }
-// }
 
 static void bdb_start_top_level_commissioning_cb(uint8_t mode_mask)
 {
@@ -162,10 +128,7 @@ void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct)
                      extended_pan_id[7], extended_pan_id[6], extended_pan_id[5], extended_pan_id[4],
                      extended_pan_id[3], extended_pan_id[2], extended_pan_id[1], extended_pan_id[0],
                      esp_zb_get_pan_id(), esp_zb_get_current_channel());
-            // xTaskCreate(button_task, "button_task", 4096, NULL, 5, NULL);
             xTaskCreate(RTOS_task, "people_counter_task", 2048, sensor, 1, NULL); // Création de la tâche pour le comptage de personnes
-
-            // xTaskCreate(dht22_task, "dht22_task", 4096, NULL, 5, NULL);
         }
         else
         {
@@ -216,21 +179,6 @@ void esp_zb_task(void *pvParameters)
     };
     esp_zb_attribute_list_t *esp_zb_identify_cluster = esp_zb_identify_cluster_create(&identify_cluster_cfg);
 
-    // ------------------------------ Cluster LIGHT ------------------------------
-    // esp_zb_on_off_cluster_cfg_t on_off_cfg = {
-    //     .on_off = 0,
-    // };
-    // esp_zb_attribute_list_t *esp_zb_on_off_cluster = esp_zb_on_off_cluster_create(&on_off_cfg);
-
-    // ------------------------------ Cluster BINARY INPUT ------------------------------
-    // esp_zb_binary_input_cluster_cfg_t binary_input_cfg = {
-    //     .out_of_service = 0,
-    //     .status_flags = 0,
-    // };
-    // uint8_t present_value = 0;
-    // esp_zb_attribute_list_t *esp_zb_binary_input_cluster = esp_zb_binary_input_cluster_create(&binary_input_cfg);
-    // esp_zb_binary_input_cluster_add_attr(esp_zb_binary_input_cluster, ESP_ZB_ZCL_ATTR_BINARY_INPUT_PRESENT_VALUE_ID, &present_value);
-
     // ------------------------------ Cluster Temperature ------------------------------
 
     esp_zb_temperature_meas_cluster_cfg_t peopleNumber = {
@@ -239,23 +187,12 @@ void esp_zb_task(void *pvParameters)
         .measured_value = 0x00};
     esp_zb_attribute_list_t *esp_zb_people_number_cluster = esp_zb_temperature_meas_cluster_create(&peopleNumber);
 
-    // ------------------------------ Cluster Humidity ------------------------------
-    // esp_zb_humidity_meas_cluster_cfg_t humidity_meas_cfg = {
-    //     .measured_value = 0xFFFF,
-    //     .min_value = 0,
-    //     .max_value = 100,
-    // };
-    // esp_zb_attribute_list_t *esp_zb_humidity_meas_cluster = esp_zb_humidity_meas_cluster_create(&humidity_meas_cfg);
-
     // ------------------------------ Create cluster list ------------------------------
     esp_zb_cluster_list_t *esp_zb_cluster_list = esp_zb_zcl_cluster_list_create();
     esp_zb_cluster_list_add_basic_cluster(esp_zb_cluster_list, esp_zb_basic_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
     esp_zb_cluster_list_add_identify_cluster(esp_zb_cluster_list, esp_zb_identify_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
-    // esp_zb_cluster_list_add_on_off_cluster(esp_zb_cluster_list, esp_zb_on_off_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
-    // esp_zb_cluster_list_add_binary_input_cluster(esp_zb_cluster_list, esp_zb_binary_input_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
-    // esp_zb_cluster_list_add_temperature_meas_cluster(esp_zb_cluster_list, esp_zb_people_number_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
+
     esp_zb_cluster_list_add_temperature_meas_cluster(esp_zb_cluster_list, esp_zb_people_number_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
-    // esp_zb_cluster_list_add_humidity_meas_cluster(esp_zb_cluster_list, esp_zb_humidity_meas_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
 
     // ------------------------------ Create endpoint list ------------------------------
     esp_zb_ep_list_t *esp_zb_ep_list = esp_zb_ep_list_create();
@@ -270,46 +207,9 @@ void esp_zb_task(void *pvParameters)
     // ------------------------------ Register Device ------------------------------
     esp_zb_device_register(esp_zb_ep_list);
 
-    /* Config the reporting info  */
-    // esp_zb_zcl_reporting_info_t reporting_info = {
-    //     .direction = ESP_ZB_ZCL_CMD_DIRECTION_TO_SRV,
-    //     .ep = HA_ESP_LIGHT_ENDPOINT,
-    //     .cluster_id = ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT,
-    //     .cluster_role = ESP_ZB_ZCL_CLUSTER_SERVER_ROLE,
-    //     .dst.profile_id = ESP_ZB_AF_HA_PROFILE_ID,
-    //         // .u.send_info.min_interval = 1,
-    //         // .u.send_info.max_interval = 0,
-    //         // .u.send_info.def_min_interval = 1,
-    //         // .u.send_info.def_max_interval = 0,
-    //     .u.send_info.delta.u16 = 100,
-    //     .attr_id = ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID,
-    //     .manuf_code = ESP_ZB_ZCL_ATTR_NON_MANUFACTURER_SPECIFIC,
-    // };
-
-    // esp_zb_zcl_update_reporting_info(&reporting_info);
-
     esp_zb_core_action_handler_register(zb_action_handler);
     esp_zb_set_primary_network_channel_set(ESP_ZB_PRIMARY_CHANNEL_MASK);
 
     ESP_ERROR_CHECK(esp_zb_start(false));
-    // esp_zb_main_loop_iteration(); // envoie que la première valeur a ha
     esp_zb_stack_main_loop(); // envoie tout le tps
 }
-
-// void app_main(void)
-// {
-//     esp_zb_platform_config_t config = {
-//         .radio_config = ESP_ZB_DEFAULT_RADIO_CONFIG(),
-//         .host_config = ESP_ZB_DEFAULT_HOST_CONFIG(),
-//     };
-//     ESP_ERROR_CHECK(nvs_flash_init());
-//     /* load Zigbee light_bulb platform config to initialization */
-//     ESP_ERROR_CHECK(esp_zb_platform_config(&config));
-//     /* hardware related and device init */
-//     xTaskCreate(esp_zb_task, "Zigbee_main", 4096, NULL, 5, NULL);
-
-//     gpio_set_direction(GPIO_NUM_12, GPIO_MODE_INPUT);
-
-//     gpio_set_direction(GPIO_NUM_0, GPIO_MODE_OUTPUT);
-//     gpio_set_level(GPIO_NUM_0, 0);
-// }

@@ -2138,16 +2138,7 @@ void vl53l1x_readResults(vl53l1x_t *v)
    v->results.ambient_count_rate_mcps_sd0 = (b[7] << 8) | b[8];
    v->results.final_crosstalk_corrected_range_mm_sd0 = (b[13] << 8) | b[14];
    v->results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0 = (b[15] << 8) | b[16];
-   // for (uint8_t i = 0; i < 17; i++)
-   // {
-   //    printf("%02x \n", b[i]);
-   // }
-   // printf("Range status: %d, stream count: %d, spads: %d, ambient rate: %d, range: %d mm, signal rate: %d mcps\n",
-   //        v->results.range_status, v->results.stream_count,
-   //        v->results.dss_actual_effective_spads_sd0,
-   //        v->results.ambient_count_rate_mcps_sd0,
-   //        v->results.final_crosstalk_corrected_range_mm_sd0,
-   //        v->results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0);
+   
 }
 
 // perform Dynamic SPAD Selection calculation/update

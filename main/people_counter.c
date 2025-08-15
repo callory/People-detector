@@ -43,8 +43,9 @@ vl53l1x_t *sensorInit()
     }
 
     printf("Initialisation i2C ok\n");
-
-    vl53l1x_setROISize(sensor, 8, 16); // FOV complet => 16*16
+    // j'avais mis 8*16 pourquoi je ne sais pas
+    // vl53l1x_setROISize(sensor, 8, 16); // FOV partiel => 8*16
+    vl53l1x_setROISize(sensor, 16, 16); // FOV complet => 16*16 
 
     vl53l1x_setROICenter(sensor, 199);
     printf("Configuration du capteur ok\n");
@@ -86,8 +87,8 @@ uint8_t people_counter(vl53l1x_t *sensor)
     {
         detect2 = false;
     }
-    // printf("detect1: %d, detect2: %d\n", detect1, detect2);
-    // Log pour debug
+    
+   
     ESP_LOGI(TAG, "dist1: %d, dist2: %d, last_zone: %d", dist1, dist2, last_zone);
 
     // Détection de passage
@@ -108,7 +109,7 @@ uint8_t people_counter(vl53l1x_t *sensor)
     }
     else if (detect1 && !detect2 && last_zone == ZONE_2)
     {
-        // printf("toto\n");
+       
         counter = counter - 1;
         ESP_LOGI(TAG, "Passage zone2 -> zone1, compteur: %d", counter);
 
@@ -133,25 +134,16 @@ void RTOS_task(void *pvParameters)
     const TickType_t xFrequency = pdMS_TO_TICKS(MEASURE_INTERVAL_MS); // 1 seconde
     vl53l1x_t *sensor = (vl53l1x_t *)pvParameters;                    // Récupération du capteur passé en paramètre
     uint8_t lastPeopleCount = 0;                                      // Dernier nombre de personnes comptées
-    // uint16_t peopleCounter = 0;
 
     while (1)
     {
-
         printf("Tâche exécutée !\n");
-        // peopleCounter = (peopleCounter + 1);
-        // uint16_t test = peopleCounter *10;
-        // if (peopleCounter == 255)
-        // {
-        // peopleCounter = 0; // Réinitialisation si le compteur dépasse 255
-        // }
+
         uint16_t peopleCounter = people_counter(sensor) * 100; // Appel de la fonction de comptage de personnes
-        // peopleCounter++;
-        // esp_zb_task(NULL); // Appel de la tâche Zigbee, si nécessaire
+
         if (peopleCounter != lastPeopleCount)
         {
             ESP_LOGI(TAG, "Nombre de personnes détectées: %d", peopleCounter);
-            // reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT, ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID, &peopleCounter, 1);
             reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT, ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID, &peopleCounter, 2);
 
             lastPeopleCount = peopleCounter; // Mise à jour du dernier nombre de personnes comptées
@@ -159,10 +151,6 @@ void RTOS_task(void *pvParameters)
         else
         {
             printf("Aucun changement dans le nombre de personnes.\n");
-            // lastPeopleCount = 1;
         }
-
-        // vTaskDelayUntil(&xLastWakeTime, xFrequency);
-        // vTaskDelay(xFrequency); // Attendre l'intervalle défini avant la prochaine exécution
     }
 }
