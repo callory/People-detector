@@ -1,4 +1,6 @@
 idf_component_register(SRCS 
+   "main.c"
+
    "esp_zb_light.c"
    "people_counter.c" 
    "vl53l1x.c" 
