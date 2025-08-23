@@ -23,33 +23,59 @@ case_e last_zone = ZONE_0;
 
 static const char *TAG = "VL53L1X";
 
+void i2c_scan(void)
+{
+    printf("Scan I2C en cours...\n");
+
+    for (uint8_t addr = 0x08; addr < 0x78; addr++)
+    {
+        i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+        i2c_master_start(cmd);
+        i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_WRITE, true);
+        i2c_master_stop(cmd);
+
+        esp_err_t ret = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, 50 / portTICK_PERIOD_MS);
+        i2c_cmd_link_delete(cmd);
+
+        if (ret == ESP_OK)
+        {
+            printf("   → Périphérique trouvé à l'adresse 0x%02X\n", addr);
+        }
+    }
+
+    printf("Scan terminé.\n");
+}
+
 vl53l1x_t *sensorInit()
 {
     vl53l1x_t *sensor = vl53l1x_config(I2C_NUM_0, I2C_MASTER_SCL_IO, I2C_MASTER_SDA_IO, -1, VL53L1X_ADDR, 1); // Configuration du capteur
 
+    i2c_scan(); // Scanner le bus I2C pour vérifier la connexion du capteur
+
     ESP_LOGI(TAG, "Démarrage du programme");
 
     const char *err = vl53l1x_init(sensor);
-
-    vl53l1x_startContinuous(sensor, 100); // 0 pour un mode continu sans délai entre les mesures
-    ESP_LOGI(TAG, "Mode continu démarré");
-
-    vl53l1x_setDistanceMode(sensor, VL53L1X_Long); // Mode de distance
 
     if (err)
     {
         ESP_LOGE(TAG, "Erreur init VL53L1X: %s", err);
         return NULL;
     }
+    else
+    {
+        vl53l1x_startContinuous(sensor, 100); // 0 pour un mode continu sans délai entre les mesures
+        ESP_LOGI(TAG, "Mode continu démarré");
 
-    printf("Initialisation i2C ok\n");
-    // j'avais mis 8*16 pourquoi je ne sais pas
-    // vl53l1x_setROISize(sensor, 8, 16); // FOV partiel => 8*16
-    vl53l1x_setROISize(sensor, 16, 16); // FOV complet => 16*16 
+        vl53l1x_setDistanceMode(sensor, VL53L1X_Long); // Mode de distance
+        printf("Initialisation i2C ok\n");
+        // j'avais mis 8*16 pourquoi je ne sais pas
+        // vl53l1x_setROISize(sensor, 8, 16); // FOV partiel => 8*16
+        vl53l1x_setROISize(sensor, 16, 16); // FOV complet => 16*16
 
-    vl53l1x_setROICenter(sensor, 199);
-    printf("Configuration du capteur ok\n");
-    return sensor; // Retourne le capteur initialisé
+        vl53l1x_setROICenter(sensor, 199);
+        printf("Configuration du capteur ok\n");
+        return sensor; // Retourne le capteur initialisé
+    }
 }
 
 uint8_t people_counter(vl53l1x_t *sensor)
@@ -87,8 +113,7 @@ uint8_t people_counter(vl53l1x_t *sensor)
     {
         detect2 = false;
     }
-    
-   
+
     ESP_LOGI(TAG, "dist1: %d, dist2: %d, last_zone: %d", dist1, dist2, last_zone);
 
     // Détection de passage
@@ -109,7 +134,7 @@ uint8_t people_counter(vl53l1x_t *sensor)
     }
     else if (detect1 && !detect2 && last_zone == ZONE_2)
     {
-       
+
         counter = counter - 1;
         ESP_LOGI(TAG, "Passage zone2 -> zone1, compteur: %d", counter);
 

@@ -1588,7 +1588,7 @@ vl53l1x_t *vl53l1x_config(int8_t port, int8_t scl, int8_t sda, int8_t xshut, uin
       return NULL;
    if (!GPIO_IS_VALID_OUTPUT_GPIO(scl) || !GPIO_IS_VALID_OUTPUT_GPIO(sda) || (xshut >= 0 && !GPIO_IS_VALID_OUTPUT_GPIO(xshut)))
    {
-      printf("toto\n");
+   
       return 0;
    }
    if (i2c_driver_install(port, I2C_MODE_MASTER, 0, 0, 0))
@@ -1606,7 +1606,7 @@ vl53l1x_t *vl53l1x_config(int8_t port, int8_t scl, int8_t sda, int8_t xshut, uin
       i2c_driver_delete(port);
       return NULL;
    }
-   i2c_set_timeout(port, 2000); // Clock stretching
+   i2c_set_timeout(port, 300); // Clock stretching
    i2c_filter_enable(port, 5);
    if (xshut >= 0)
    {
@@ -1642,10 +1642,12 @@ void vl53l1x_setAddress(vl53l1x_t *v, uint8_t new_addr)
 
 const char *vl53l1x_init(vl53l1x_t *v)
 {
+   uint16_t toto = vl53l1x_readReg16Bit(v, IDENTIFICATION__MODEL_ID);
+
    // check model ID and module type registers (values specified in datasheet)
-   if (vl53l1x_readReg16Bit(v, IDENTIFICATION__MODEL_ID) != 0xEACC)
+   if (toto != 0xEACC)
    {
-      
+      printf("VL53L1X: Bad model ID: %04X\n", toto);
       return "Not VL53L1X";
    }
 
