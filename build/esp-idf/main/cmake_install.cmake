@@ -1,4 +1,4 @@
-# Install script for directory: C:/Users/coran/SynologyDrive/Projet/i2c_tools/main
+# Install script for directory: C:/Users/coran/SynologyDrive/Bricolage/i2c_tools/main
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

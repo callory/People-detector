@@ -1591,22 +1591,29 @@ vl53l1x_t *vl53l1x_config(int8_t port, int8_t scl, int8_t sda, int8_t xshut, uin
    
       return 0;
    }
-   if (i2c_driver_install(port, I2C_MODE_MASTER, 0, 0, 0))
-      return NULL; // Uh?
+   esp_err_t err = i2c_driver_install(port, I2C_MODE_MASTER, 0, 0, 0);
+   if (err != ESP_OK && err != ESP_ERR_INVALID_STATE) {
+      printf("VL53L1X: i2c_driver_install failed: %s\n", esp_err_to_name(err));
+      return NULL; 
+   }
+   if (err == ESP_ERR_INVALID_STATE) {
+      printf("VL53L1X: I2C driver already installed on port %d\n", port);
+   }
    i2c_config_t config = {
        .mode = I2C_MODE_MASTER,
        .sda_io_num = sda,
        .scl_io_num = scl,
        .sda_pullup_en = true,
        .scl_pullup_en = true,
-       .master.clk_speed = 400000,
+       .master.clk_speed = 100000,
    };
    if (i2c_param_config(port, &config))
    { // Config failed
       i2c_driver_delete(port);
+      printf("VL53L1X: I2C param config failed on port %d\n", port);
       return NULL;
    }
-   i2c_set_timeout(port, 300); // Clock stretching
+   i2c_set_timeout(port, 10000); // Clock stretching timeout (in I2C clock cycles)
    i2c_filter_enable(port, 5);
    if (xshut >= 0)
    {

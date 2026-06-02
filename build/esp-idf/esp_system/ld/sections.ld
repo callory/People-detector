@@ -1,6 +1,6 @@
 /* Automatically generated file; DO NOT EDIT */
 /* Espressif IoT Development Framework Linker Script */
-/* Generated from: C:\Users\coran\SynologyDrive\Projet\i2c_tools\build\esp-idf\esp_system\ld\sections.ld.in */
+/* Generated from: C:\Users\coran\SynologyDrive\Bricolage\i2c_tools\build\esp-idf\esp_system\ld\sections.ld.in */
 
 /*
 

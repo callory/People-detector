@@ -1,4 +1,4 @@
-# Install script for directory: C:/Users/coran/SynologyDrive/Projet/i2c_tools/managed_components/espressif__led_strip
+# Install script for directory: C:/Users/coran/SynologyDrive/Bricolage/i2c_tools/managed_components/espressif__led_strip
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
