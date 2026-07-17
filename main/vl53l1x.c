@@ -1615,7 +1615,7 @@ vl53l1x_t *vl53l1x_config(int8_t port, int8_t scl, int8_t sda, int8_t xshut, uin
       printf("VL53L1X: I2C param config failed on port %d\n", port);
       return NULL;
    }
-     i2c_set_timeout(port, 20); // Clock stretching timeout (in I2C clock cycles)
+   i2c_set_timeout(port, 20); // Clock stretching timeout (in I2C clock cycles)
    i2c_filter_enable(port, 5);
    if (xshut >= 0)
    {

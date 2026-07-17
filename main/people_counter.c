@@ -15,6 +15,7 @@ case_e last_zone = ZONE_0;
 
 #define I2C_MASTER_SCL_IO 20      // GPIO pour SCL
 #define I2C_MASTER_SDA_IO 19      // GPIO pour SDA
+#define XSHUT_PIN  7              // GPIO pour le pin XSHUT
 #define I2C_MASTER_NUM I2C_NUM_0  // Numéro du port I2C
 #define I2C_MASTER_FREQ_HZ 400000 // Fréquence I2C
 #define VL53L1X_ADDR 0x29         // Adresse I2C par défaut du VL53L0X
@@ -38,7 +39,7 @@ void i2c_scan(void)
         esp_err_t ret = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, 50 / portTICK_PERIOD_MS);
         // printf("I2C scan result: %d\n", ret);
         i2c_cmd_link_delete(cmd);
-        
+
         if (ret == ESP_OK)
         {
             printf("   → Périphérique trouvé à l'adresse 0x%02X\n", addr);
@@ -52,28 +53,31 @@ void i2c_scan(void)
 vl53l1x_t *sensorInit()
 {
     ESP_LOGI(TAG, "=== INITIALISATION CAPTEUR VL53L1X ===");
-    
+
     // Configurer le capteur (installe aussi le driver I2C)
-    ESP_LOGI(TAG, "Configuration I2C (port %d, SCL=%d, SDA=%d, adresse=0x%02X)", 
-           I2C_MASTER_NUM, I2C_MASTER_SCL_IO, I2C_MASTER_SDA_IO, VL53L1X_ADDR);
-    vl53l1x_t *sensor = vl53l1x_config(I2C_MASTER_NUM, I2C_MASTER_SCL_IO, I2C_MASTER_SDA_IO, -1, VL53L1X_ADDR, 0);
-    
-    if (sensor == NULL) {
+    ESP_LOGI(TAG, "Configuration I2C (port %d, SCL=%d, SDA=%d, adresse=0x%02X)",
+             I2C_MASTER_NUM, I2C_MASTER_SCL_IO, I2C_MASTER_SDA_IO, VL53L1X_ADDR);
+    vl53l1x_t *sensor = vl53l1x_config(I2C_MASTER_NUM, I2C_MASTER_SCL_IO, I2C_MASTER_SDA_IO, XSHUT_PIN, VL53L1X_ADDR, 0);
+
+    if (sensor == NULL)
+    {
         ESP_LOGE(TAG, "ERREUR: vl53l1x_config() a retourné NULL");
         ESP_LOGE(TAG, "Vérifiez: GPIO valides, alimentation 3.3V, broches SCL/SDA connectées");
         return NULL;
     }
-    
+
     // Initialiser le capteur
     ESP_LOGI(TAG, "Initialisation du VL53L1X...");
     const char *err = vl53l1x_init(sensor);
 
-    if (err) {
+    if (err)
+    {
         ESP_LOGE(TAG, "=== ERREUR INITIALISATION CAPTEUR ===");
         ESP_LOGE(TAG, "Code erreur: %s", err);
-        
+
         // Diagnostic détaillé basé sur le code d'erreur
-        if (strcmp(err, "Not VL53L1X") == 0) {
+        if (strcmp(err, "Not VL53L1X") == 0)
+        {
             ESP_LOGE(TAG, "Le modèle ID reçu n'est pas 0xEACC (valeur attendue pour VL53L1X)");
             ESP_LOGE(TAG, "DIAGNOSTIC: Le capteur ne répond pas correctement sur I2C");
             ESP_LOGE(TAG, "Vérifiez:");
@@ -81,14 +85,18 @@ vl53l1x_t *sensorInit()
             ESP_LOGE(TAG, "  • Broches SCL (GPIO20) et SDA (GPIO19) bien connectées");
             ESP_LOGE(TAG, "  • Pull-up résistances (~4.7kΩ) sur SCL et SDA");
             ESP_LOGE(TAG, "  • Capteur VL53L1X (et non VL53L0X ou autre modèle)");
-        } else if (strcmp(err, "Timeout") == 0) {
+        }
+        else if (strcmp(err, "Timeout") == 0)
+        {
             ESP_LOGE(TAG, "Timeout en attente du démarrage du capteur");
             ESP_LOGE(TAG, "Le capteur ne répond pas aux commandes I2C");
         }
-        
+
         free(sensor); // Libérer la mémoire allouée
         return NULL;
-    } else {
+    }
+    else
+    {
         vl53l1x_startContinuous(sensor, 25); // 0 pour un mode continu sans délai entre les mesures
         ESP_LOGI(TAG, "Mode continu démarré");
 
@@ -99,11 +107,10 @@ vl53l1x_t *sensorInit()
         vl53l1x_setROISize(sensor, 8, 8); // FOV complet => 16*16
 
         vl53l1x_setROICenter(sensor, 199);
-        
-        
+
         // Attendre que la première mesure soit disponible (~200ms pour mode Long)
         // vTaskDelay(pdMS_TO_TICKS(200));
-        
+
         printf("Configuration du capteur ok\n");
         ESP_LOGI(TAG, "✓ Capteur VL53L1X initialisé avec succès!\n");
         return sensor; // Retourne le capteur initialisé
@@ -122,12 +129,12 @@ uint8_t people_counter(vl53l1x_t *sensor)
     // Zone 1 - Lecture bloquante pour garantir donnée fraîche
     vl53l1x_setROICenter(sensor, center[0]);
     // vTaskDelay(pdMS_TO_TICKS(100)); // Attendre que la mesure soit prête
-    uint16_t dist1 = vl53l1x_read(sensor, true);  // true = BLOQUANT (attendre la donnée)
+    uint16_t dist1 = vl53l1x_read(sensor, true); // true = BLOQUANT (attendre la donnée)
 
     // Zone 2 - Lecture bloquante pour garantir donnée fraîche
     vl53l1x_setROICenter(sensor, center[1]);
     // vTaskDelay(pdMS_TO_TICKS(100)); // Attendre que la mesure soit prête
-    uint16_t dist2 = vl53l1x_read(sensor, true);  // true = BLOQUANT (attendre la donnée)
+    uint16_t dist2 = vl53l1x_read(sensor, true); // true = BLOQUANT (attendre la donnée)
 
     if (dist1 <= 1200 && dist1 > 0)
     {
@@ -209,7 +216,7 @@ void RTOS_task(void *pvParameters)
         {
             // printf("Aucun changement dans le nombre de personnes.\n");
             ESP_LOGI(TAG, "Aucun changement dans le nombre de personnes");
-
         }
+        vTaskDelayUntil(&xLastWakeTime, xFrequency); // Attente jusqu'à la prochaine exécution
     }
 }
