@@ -1450,7 +1450,7 @@ uint8_t vl53l1x_setMeasurementTimingBudget(vl53l1x_t *v, uint32_t budget_us)
 
 uint8_t vl53l1x_dataReady(vl53l1x_t *v)
 {
-   
+
    return (vl53l1x_readReg(v, GPIO__TIO_HV_STATUS) & 0x01) == 0;
 }
 
@@ -1588,15 +1588,17 @@ vl53l1x_t *vl53l1x_config(int8_t port, int8_t scl, int8_t sda, int8_t xshut, uin
       return NULL;
    if (!GPIO_IS_VALID_OUTPUT_GPIO(scl) || !GPIO_IS_VALID_OUTPUT_GPIO(sda) || (xshut >= 0 && !GPIO_IS_VALID_OUTPUT_GPIO(xshut)))
    {
-   
+
       return 0;
    }
    esp_err_t err = i2c_driver_install(port, I2C_MODE_MASTER, 0, 0, 0);
-   if (err != ESP_OK && err != ESP_ERR_INVALID_STATE) {
+   if (err != ESP_OK && err != ESP_ERR_INVALID_STATE)
+   {
       printf("VL53L1X: i2c_driver_install failed: %s\n", esp_err_to_name(err));
-      return NULL; 
+      return NULL;
    }
-   if (err == ESP_ERR_INVALID_STATE) {
+   if (err == ESP_ERR_INVALID_STATE)
+   {
       printf("VL53L1X: I2C driver already installed on port %d\n", port);
    }
    i2c_config_t config = {
@@ -1613,7 +1615,7 @@ vl53l1x_t *vl53l1x_config(int8_t port, int8_t scl, int8_t sda, int8_t xshut, uin
       printf("VL53L1X: I2C param config failed on port %d\n", port);
       return NULL;
    }
-   i2c_set_timeout(port, 10000); // Clock stretching timeout (in I2C clock cycles)
+     i2c_set_timeout(port, 20); // Clock stretching timeout (in I2C clock cycles)
    i2c_filter_enable(port, 5);
    if (xshut >= 0)
    {
@@ -2042,6 +2044,12 @@ uint16_t vl53l1x_read(vl53l1x_t *v, uint8_t blocking)
    }
    // printf("Data ready\n");
    vl53l1x_readResults(v);
+   ESP_LOGI(TAG, "vl53l1x_read: v->err=%d (%s)", v->err, esp_err_to_name(v->err));
+   if (v->err != ESP_OK)
+   {
+      ESP_LOGE(TAG, "Erreur I2C lors de la lecture VL53L1X: %s (code=%d)",
+               esp_err_to_name(v->err), v->err);
+   }
    if (v->err)
       return 0;
 
@@ -2054,6 +2062,12 @@ uint16_t vl53l1x_read(vl53l1x_t *v, uint8_t blocking)
    vl53l1x_updateDSS(v);
 
    vl53l1x_getRangingData(v);
+
+   ESP_LOGI(TAG, "VL53L1X read: range_status=%u raw_range=%u range_mm=%u stream_count=%u",
+            v->results.range_status,
+            v->results.final_crosstalk_corrected_range_mm_sd0,
+            v->ranging_data.range_mm,
+            v->results.stream_count);
 
    vl53l1x_writeReg(v, SYSTEM__INTERRUPT_CLEAR, 0x01); // sys_interrupt_clear_range
    // printf("Range status: %s\n", vl53l1x_rangeStatusToString(v, v->ranging_data.range_status));
@@ -2147,7 +2161,6 @@ void vl53l1x_readResults(vl53l1x_t *v)
    v->results.ambient_count_rate_mcps_sd0 = (b[7] << 8) | b[8];
    v->results.final_crosstalk_corrected_range_mm_sd0 = (b[13] << 8) | b[14];
    v->results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0 = (b[15] << 8) | b[16];
-   
 }
 
 // perform Dynamic SPAD Selection calculation/update

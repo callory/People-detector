@@ -16,7 +16,7 @@ case_e last_zone = ZONE_0;
 #define I2C_MASTER_SCL_IO 20      // GPIO pour SCL
 #define I2C_MASTER_SDA_IO 19      // GPIO pour SDA
 #define I2C_MASTER_NUM I2C_NUM_0  // Numéro du port I2C
-#define I2C_MASTER_FREQ_HZ 100000 // Fréquence I2C
+#define I2C_MASTER_FREQ_HZ 400000 // Fréquence I2C
 #define VL53L1X_ADDR 0x29         // Adresse I2C par défaut du VL53L0X
 
 #define VL53L0X_REG_RESULT 0x14 // Registre de lecture des données
@@ -89,16 +89,21 @@ vl53l1x_t *sensorInit()
         free(sensor); // Libérer la mémoire allouée
         return NULL;
     } else {
-        vl53l1x_startContinuous(sensor, 100); // 0 pour un mode continu sans délai entre les mesures
+        vl53l1x_startContinuous(sensor, 25); // 0 pour un mode continu sans délai entre les mesures
         ESP_LOGI(TAG, "Mode continu démarré");
 
         vl53l1x_setDistanceMode(sensor, VL53L1X_Long); // Mode de distance
         printf("Initialisation i2C ok\n");
         // j'avais mis 8*16 pourquoi je ne sais pas
         // vl53l1x_setROISize(sensor, 8, 16); // FOV partiel => 8*16
-        vl53l1x_setROISize(sensor, 16, 16); // FOV complet => 16*16
+        vl53l1x_setROISize(sensor, 8, 8); // FOV complet => 16*16
 
         vl53l1x_setROICenter(sensor, 199);
+        
+        
+        // Attendre que la première mesure soit disponible (~200ms pour mode Long)
+        // vTaskDelay(pdMS_TO_TICKS(200));
+        
         printf("Configuration du capteur ok\n");
         ESP_LOGI(TAG, "✓ Capteur VL53L1X initialisé avec succès!\n");
         return sensor; // Retourne le capteur initialisé
@@ -110,19 +115,19 @@ uint8_t people_counter(vl53l1x_t *sensor)
     bool detect1 = false;
     bool detect2 = false;
     static const char *TAG = "VL53L1X";
-    uint8_t center[2] = {167, 231}; // Valeurs centre zone
+    uint8_t center[2] = {175, 231}; // Valeurs centre zone
 
     static uint8_t counter = 0; // Compteur de passage
 
-    // Zone 1
+    // Zone 1 - Lecture bloquante pour garantir donnée fraîche
     vl53l1x_setROICenter(sensor, center[0]);
-    vTaskDelay(pdMS_TO_TICKS(100));
-    uint16_t dist1 = vl53l1x_read(sensor, false);
+    // vTaskDelay(pdMS_TO_TICKS(100)); // Attendre que la mesure soit prête
+    uint16_t dist1 = vl53l1x_read(sensor, true);  // true = BLOQUANT (attendre la donnée)
 
-    // Zone 2
+    // Zone 2 - Lecture bloquante pour garantir donnée fraîche
     vl53l1x_setROICenter(sensor, center[1]);
-    vTaskDelay(pdMS_TO_TICKS(100));
-    uint16_t dist2 = vl53l1x_read(sensor, false);
+    // vTaskDelay(pdMS_TO_TICKS(100)); // Attendre que la mesure soit prête
+    uint16_t dist2 = vl53l1x_read(sensor, true);  // true = BLOQUANT (attendre la donnée)
 
     if (dist1 <= 1200 && dist1 > 0)
     {
@@ -189,7 +194,7 @@ void RTOS_task(void *pvParameters)
 
     while (1)
     {
-        printf("Tâche exécutée !\n");
+        // printf("Tâche exécutée !\n");
 
         uint16_t peopleCounter = people_counter(sensor) * 100; // Appel de la fonction de comptage de personnes
 
@@ -202,7 +207,9 @@ void RTOS_task(void *pvParameters)
         }
         else
         {
-            printf("Aucun changement dans le nombre de personnes.\n");
+            // printf("Aucun changement dans le nombre de personnes.\n");
+            ESP_LOGI(TAG, "Aucun changement dans le nombre de personnes");
+
         }
     }
 }
