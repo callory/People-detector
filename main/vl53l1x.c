@@ -2040,9 +2040,10 @@ uint16_t vl53l1x_read(vl53l1x_t *v, uint8_t blocking)
             printf("Timeout waiting for data ready\n");
             return 0;
          }
+         vTaskDelay(1);
       }
    }
-   // printf("Data ready\n");
+   printf("Data ready\n");
    vl53l1x_readResults(v);
    ESP_LOGI(TAG, "vl53l1x_read: v->err=%d (%s)", v->err, esp_err_to_name(v->err));
    if (v->err != ESP_OK)

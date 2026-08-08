@@ -11,7 +11,7 @@
 #include "vl53l1x.h"
 #include "people_counter.h"
 
-static const char *TAG = "DEMO";
+static const char *TAG = "esp_zb_light.c";
 vl53l1x_t *sensor = NULL;
 
 #define DEFINE_PSTRING(var, str)   \
@@ -23,6 +23,17 @@ vl53l1x_t *sensor = NULL;
 
 void reportAttribute(uint8_t endpoint, uint16_t clusterID, uint16_t attributeID, uint8_t *value, uint8_t value_length)
 {
+    esp_zb_lock_acquire(portMAX_DELAY);
+
+    esp_zb_zcl_attr_t *value_r = esp_zb_zcl_get_attribute(endpoint, clusterID, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, attributeID);
+    if (value_r == NULL || value_r->data_p == NULL)
+    {
+        ESP_LOGE(TAG, "Attribut introuvable (ep=%d, cluster=0x%04x, attr=0x%04x)", endpoint, clusterID, attributeID);
+        esp_zb_lock_release();
+        return;
+    }
+    memcpy(value_r->data_p, value, value_length);
+
     esp_zb_zcl_report_attr_cmd_t cmd = {
         .zcl_basic_cmd = {
             .dst_addr_u.addr_short = 0x0000,
@@ -33,14 +44,10 @@ void reportAttribute(uint8_t endpoint, uint16_t clusterID, uint16_t attributeID,
         .clusterID = clusterID,
         .direction = ESP_ZB_ZCL_CMD_DIRECTION_TO_CLI,
         .attributeID = attributeID};
-    esp_zb_zcl_attr_t *value_r = esp_zb_zcl_get_attribute(endpoint, clusterID, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, attributeID);
-
-    memcpy(value_r->data_p, value, value_length);
-    esp_zb_lock_acquire(portMAX_DELAY);
 
     esp_zb_zcl_report_attr_cmd_req(&cmd);
     esp_zb_lock_release();
-    ESP_EARLY_LOGI(TAG, "Send 'report attributes' command");
+    ESP_LOGI(TAG, "Send 'report attributes' command");
 }
 
 static void bdb_start_top_level_commissioning_cb(uint8_t mode_mask)
@@ -114,7 +121,7 @@ void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct)
     case ESP_ZB_BDB_SIGNAL_STEERING:
         if (err_status == ESP_OK)
         {
-            printf("toto");
+            ESP_LOGI(TAG, "Network steering was successful");
             sensor = sensorInit(); // Initialize the VL53L1X sensor
 
             if (sensor == NULL)
@@ -128,7 +135,7 @@ void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct)
                      extended_pan_id[7], extended_pan_id[6], extended_pan_id[5], extended_pan_id[4],
                      extended_pan_id[3], extended_pan_id[2], extended_pan_id[1], extended_pan_id[0],
                      esp_zb_get_pan_id(), esp_zb_get_current_channel());
-            xTaskCreate(RTOS_task, "people_counter_task", 2048, sensor, 1, NULL); // Création de la tâche pour le comptage de personnes
+            xTaskCreate(RTOS_task, "people_counter_task", 8192, sensor, 1, NULL); // Création de la tâche pour le comptage de personnes
         }
         else
         {
@@ -136,7 +143,7 @@ void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct)
             ESP_LOGI(TAG, "Network steering was not successful (status: %s)", esp_err_to_name(err_status));
             // esp_zb_scheduler_alarm((esp_zb_callback_t)bdb_start_top_level_commissioning_cb, ESP_ZB_BDB_MODE_NETWORK_STEERING, 1000);
 
-            printf("toto");
+            ESP_LOGI(TAG, "Network steering was not successful");
             sensor = sensorInit(); // Initialize the VL53L1X sensor
 
             if (sensor == NULL)
@@ -144,7 +151,7 @@ void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct)
                 ESP_LOGE(TAG, "VL53L1X sensor not initialized");
                 return;
             }
-            xTaskCreate(RTOS_task, "people_counter_task", 2048, sensor, 1, NULL); // Création de la tâche pour le comptage de personnes
+            xTaskCreate(RTOS_task, "people_counter_task", 8192, sensor, 1, NULL); // Création de la tâche pour le comptage de personnes
         }
         break;
     default:
