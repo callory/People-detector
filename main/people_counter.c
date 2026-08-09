@@ -10,7 +10,7 @@
 #include "esp_zb_light.h"
 #include "driver/i2c.h"
 
-#define MEASURE_INTERVAL_MS 1000 // Intervalle de mesure en millisecondes
+#define MEASURE_INTERVAL_MS 50 // Intervalle de mesure en millisecondes
 case_e last_zone = ZONE_0;
 
 #define I2C_MASTER_SCL_IO 20      // GPIO pour SCL
@@ -101,6 +101,7 @@ vl53l1x_t *sensorInit()
         ESP_LOGI(TAG, "Mode continu démarré");
 
         vl53l1x_setDistanceMode(sensor, VL53L1X_Short); // Mode de distance
+        vl53l1x_setMeasurementTimingBudget(sensor, 20000); // 20 ms au lieu des 50 ms par défaut
         printf("Initialisation i2C ok\n");
         // j'avais mis 8*16 pourquoi je ne sais pas
         // vl53l1x_setROISize(sensor, 8, 16); // FOV partiel => 8*16
@@ -122,75 +123,69 @@ uint8_t people_counter(vl53l1x_t *sensor)
     bool detect1 = false;
     bool detect2 = false;
     static const char *TAG = "VL53L1X";
-    uint8_t center[2] = {167, 223}; // Valeurs cened
-    static uint8_t counter = 0;     // Compteur de passage
+    static uint8_t empty_count = 0;
+    uint8_t center[2] = {167, 223};
+    static uint8_t counter = 0;
 
-    // Zone 1 - Lecture bloquante pour garantir donnée fraîche
     vl53l1x_setROICenter(sensor, center[0]);
-    // vTaskDelay(pdMS_TO_TICKS(100)); // Attendre que la mesure soit prête
-    // uint16_t dist1 = vl53l1x_read(sensor, true); // true = BLOQUANT (attendre la donnée)
+    vTaskDelay(pdMS_TO_TICKS(5));
     uint16_t dist1 = vl53l1x_readSingle(sensor, true);
-    // Zone 2 - Lecture bloquante pour garantir donnée fraîche
+
     vl53l1x_setROICenter(sensor, center[1]);
-    // vTaskDelay(pdMS_TO_TICKS(100)); // Attendre que la mesure soit prête
-    // uint16_t dist2 = vl53l1x_read(sensor, true); // true = BLOQUANT (attendre la donnée)
+    vTaskDelay(pdMS_TO_TICKS(5));
     uint16_t dist2 = vl53l1x_readSingle(sensor, true);
-    if (dist1 <= 1200 && dist1 > 0)
-    {
-        detect1 = true;
-    }
-    else
-    {
-        detect1 = false;
-    }
-    if (dist2 <= 1200 && dist2 > 0)
-    {
-        detect2 = true;
-    }
-    else
-    {
-        detect2 = false;
-    }
 
-    ESP_LOGI(TAG, "dist1: %d, dist2: %d, last_zone: %d", dist1, dist2, last_zone);
+    detect1 = (dist1 <= 1200 && dist1 > 0);
+    detect2 = (dist2 <= 1200 && dist2 > 0);
 
-    // Détection de passage
-    if (detect1 && !detect2 && last_zone != ZONE_1 && last_zone == ZONE_0)
+    ESP_LOGI(TAG, "dist1: %d, dist2: %d, last_zone: %d, empty_count: %d", dist1, dist2, last_zone, empty_count);
+
+    if (detect1 && !detect2 && last_zone == ZONE_0)
     {
         last_zone = ZONE_1;
+        empty_count = 0;                          // MODIFIÉ : reset dès qu'il y a une détection
     }
     else if (detect2 && !detect1 && last_zone == ZONE_1)
     {
-
         counter++;
         ESP_LOGI(TAG, "Passage zone1 -> zone2, compteur: %d", counter);
-        last_zone = ZONE_0;
+        last_zone = ZONE_2;
+        empty_count = 0;
     }
-    else if (detect2 && !detect1 && last_zone != ZONE_2 && last_zone == ZONE_0)
+    else if (detect2 && !detect1 && last_zone == ZONE_0)
     {
         last_zone = ZONE_2;
+        empty_count = 0;
     }
     else if (detect1 && !detect2 && last_zone == ZONE_2)
     {
-
-        counter = counter - 1;
-        ESP_LOGI(TAG, "Passage zone2 -> zone1, compteur: %d", counter);
-
-        last_zone = ZONE_0;
+        if (counter > 0)
+        {
+            counter--;
+            ESP_LOGI(TAG, "Passage zone2 -> zone1, compteur: %d", counter);
+        }
+        last_zone = ZONE_1;
+        empty_count = 0;
     }
     else if (!detect1 && !detect2 && last_zone != ZONE_0)
     {
-        last_zone = ZONE_0; // Réinitialisation si aucune détection
+            // last_zone = ZONE_0;
+
+        empty_count++;                             // MODIFIÉ : incrémente sans jamais reset ici
+        if (empty_count >= 3 && last_zone != ZONE_0)
+        {
+            last_zone = ZONE_0;
+            empty_count = 0;
+        }
+    }
+    else
+    {
+        empty_count = 0;                            // les deux zones détectent en même temps : cas ambigu, on reset juste le compteur de silence
     }
 
-    if (counter == 255)
-    {
-        counter = 0; // Empêche le compteur de devenir négatif
-    }
     printf("counter: %d\n", counter);
     return counter;
 }
-
 void RTOS_task(void *pvParameters)
 {
     TickType_t xLastWakeTime = xTaskGetTickCount();

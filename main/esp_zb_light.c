@@ -144,14 +144,14 @@ void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct)
             // esp_zb_scheduler_alarm((esp_zb_callback_t)bdb_start_top_level_commissioning_cb, ESP_ZB_BDB_MODE_NETWORK_STEERING, 1000);
 
             ESP_LOGI(TAG, "Network steering was not successful");
-            sensor = sensorInit(); // Initialize the VL53L1X sensor
+            // sensor = sensorInit(); // Initialize the VL53L1X sensor
 
             if (sensor == NULL)
             {
                 ESP_LOGE(TAG, "VL53L1X sensor not initialized");
                 return;
             }
-            xTaskCreate(RTOS_task, "people_counter_task", 8192, sensor, 1, NULL); // Création de la tâche pour le comptage de personnes
+            // xTaskCreate(RTOS_task, "people_counter_task", 8192, sensor, 1, NULL); // Création de la tâche pour le comptage de personnes
         }
         break;
     default:

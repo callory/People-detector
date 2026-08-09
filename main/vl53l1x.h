@@ -56,7 +56,7 @@ void vl53l1x_readMulti(vl53l1x_t *, uint16_t reg, uint8_t * dst, uint8_t count);
 uint8_t vl53l1x_setDistanceMode(vl53l1x_t *,vl53l1x_DistanceMode mode);
 vl53l1x_DistanceMode vl53l1x_getDistanceMode(vl53l1x_t *);
 
-//uint8_t vl53l1x_setMeasurementTimingBudget(vl53l1x_t *,uint32_t budget_us);
+uint8_t vl53l1x_setMeasurementTimingBudget(vl53l1x_t *,uint32_t budget_us);
 uint32_t vl53l1x_getMeasurementTimingBudget(vl53l1x_t *);
 
 void vl53l1x_setROISize(vl53l1x_t *,uint8_t width, uint8_t height);
