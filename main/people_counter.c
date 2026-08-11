@@ -117,33 +117,47 @@ vl53l1x_t *sensorInit()
         return sensor; // Retourne le capteur initialisé
     }
 }
-
 uint8_t people_counter(vl53l1x_t *sensor)
 {
-    bool detect1 = false;
-    bool detect2 = false;
     static const char *TAG = "VL53L1X";
     static uint8_t empty_count = 0;
-    uint8_t center[2] = {167, 223};
-    static uint8_t counter = 0;
+    static uint8_t confirm1 = 0, confirm2 = 0;   // Compteurs de confirmation par zone
+    uint8_t center[2] = {167, 223};              // Centres ROI zone1 / zone2
+    static uint8_t counter = 0;                  // Compteur de passages
+    const uint8_t CONFIRM_THRESHOLD = 2;         // Nb de mesures consécutives requises (~100ms à 50ms/cycle)
 
+    bool detect1 = false;
+    bool detect2 = false;
+
+    // --- Zone 1 ---
     vl53l1x_setROICenter(sensor, center[0]);
     vTaskDelay(pdMS_TO_TICKS(5));
     uint16_t dist1 = vl53l1x_readSingle(sensor, true);
 
+    // --- Zone 2 ---
     vl53l1x_setROICenter(sensor, center[1]);
     vTaskDelay(pdMS_TO_TICKS(5));
     uint16_t dist2 = vl53l1x_readSingle(sensor, true);
 
-    detect1 = (dist1 <= 1200 && dist1 > 0);
-    detect2 = (dist2 <= 1200 && dist2 > 0);
+    // Mesures brutes avant confirmation
+    bool raw1 = (dist1 <= 1200 && dist1 > 0);
+    bool raw2 = (dist2 <= 1200 && dist2 > 0);
+
+    // Débounce : incrémente si détection brute positive, sinon reset immédiat
+    confirm1 = raw1 ? confirm1 + 1 : 0;
+    confirm2 = raw2 ? confirm2 + 1 : 0;
+
+    // Détection "officielle" seulement après confirmation sur plusieurs cycles
+    detect1 = (confirm1 >= CONFIRM_THRESHOLD);
+    detect2 = (confirm2 >= CONFIRM_THRESHOLD);
 
     ESP_LOGI(TAG, "dist1: %d, dist2: %d, last_zone: %d, empty_count: %d", dist1, dist2, last_zone, empty_count);
 
+    // Détection de passage
     if (detect1 && !detect2 && last_zone == ZONE_0)
     {
         last_zone = ZONE_1;
-        empty_count = 0;                          // MODIFIÉ : reset dès qu'il y a une détection
+        empty_count = 0;
     }
     else if (detect2 && !detect1 && last_zone == ZONE_1)
     {
@@ -169,9 +183,7 @@ uint8_t people_counter(vl53l1x_t *sensor)
     }
     else if (!detect1 && !detect2 && last_zone != ZONE_0)
     {
-            // last_zone = ZONE_0;
-
-        empty_count++;                             // MODIFIÉ : incrémente sans jamais reset ici
+        empty_count++;
         if (empty_count >= 3 && last_zone != ZONE_0)
         {
             last_zone = ZONE_0;
@@ -180,7 +192,7 @@ uint8_t people_counter(vl53l1x_t *sensor)
     }
     else
     {
-        empty_count = 0;                            // les deux zones détectent en même temps : cas ambigu, on reset juste le compteur de silence
+        empty_count = 0; // les deux zones détectent en même temps : cas ambigu, on reset juste le compteur de silence
     }
 
     printf("counter: %d\n", counter);
@@ -189,28 +201,31 @@ uint8_t people_counter(vl53l1x_t *sensor)
 void RTOS_task(void *pvParameters)
 {
     TickType_t xLastWakeTime = xTaskGetTickCount();
-    const TickType_t xFrequency = pdMS_TO_TICKS(MEASURE_INTERVAL_MS); // 1 seconde
-    vl53l1x_t *sensor = (vl53l1x_t *)pvParameters;                    // Récupération du capteur passé en paramètre
-    uint8_t lastPeopleCount = 0;                                      // Dernier nombre de personnes comptées
+    const TickType_t xFrequency = pdMS_TO_TICKS(MEASURE_INTERVAL_MS);
+    vl53l1x_t *sensor = (vl53l1x_t *)pvParameters;
+    uint16_t lastPeopleCount = 0;
+    uint16_t lastReportedCount = 0;
+    TickType_t lastReportTime = 0;
+    const TickType_t reportMinInterval = pdMS_TO_TICKS(1000); // pas plus d'un envoi radio toutes les 1000 ms
 
     while (1)
     {
-        // printf("Tâche exécutée !\n");
-
-        uint16_t peopleCounter = people_counter(sensor) * 100; // Appel de la fonction de comptage de personnes
+        uint16_t peopleCounter = people_counter(sensor) * 100;
 
         if (peopleCounter != lastPeopleCount)
         {
             ESP_LOGI(TAG, "Nombre de personnes détectées: %d", peopleCounter);
-            reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT, ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID, &peopleCounter, 2);
+            lastPeopleCount = peopleCounter;
+        }
 
-            lastPeopleCount = peopleCounter; // Mise à jour du dernier nombre de personnes comptées
-        }
-        else
+        TickType_t now = xTaskGetTickCount();
+        if (peopleCounter != lastReportedCount && (now - lastReportTime) >= reportMinInterval)
         {
-            // printf("Aucun changement dans le nombre de personnes.\n");
-            ESP_LOGI(TAG, "Aucun changement dans le nombre de personnes");
+           // reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT, ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID, &peopleCounter, 2);
+            lastReportedCount = peopleCounter;
+            lastReportTime = now;
         }
-        vTaskDelayUntil(&xLastWakeTime, xFrequency); // Attente jusqu'à la prochaine exécution
+
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
 }
