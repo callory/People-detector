@@ -221,7 +221,7 @@ void RTOS_task(void *pvParameters)
         TickType_t now = xTaskGetTickCount();
         if (peopleCounter != lastReportedCount && (now - lastReportTime) >= reportMinInterval)
         {
-           // reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT, ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID, &peopleCounter, 2);
+           reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT, ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID, &peopleCounter, 2);
             lastReportedCount = peopleCounter;
             lastReportTime = now;
         }
