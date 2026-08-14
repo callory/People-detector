@@ -2037,19 +2037,19 @@ uint16_t vl53l1x_read(vl53l1x_t *v, uint8_t blocking)
          if (vl53l1x_checkTimeoutExpired(v))
          {
             v->did_timeout = true;
-            printf("Timeout waiting for data ready\n");
+            // printf("Timeout waiting for data ready\n");
             return 0;
          }
          vTaskDelay(1);
       }
    }
-   printf("Data ready\n");
+   // printf("Data ready\n");
    vl53l1x_readResults(v);
-   ESP_LOGI(TAG, "vl53l1x_read: v->err=%d (%s)", v->err, esp_err_to_name(v->err));
+   // ESP_LOGI(TAG, "vl53l1x_read: v->err=%d (%s)", v->err, esp_err_to_name(v->err));
    if (v->err != ESP_OK)
    {
-      ESP_LOGE(TAG, "Erreur I2C lors de la lecture VL53L1X: %s (code=%d)",
-               esp_err_to_name(v->err), v->err);
+      // ESP_LOGE(TAG, "Erreur I2C lors de la lecture VL53L1X: %s (code=%d)",
+      //          esp_err_to_name(v->err), v->err);
    }
    if (v->err)
       return 0;
@@ -2064,11 +2064,11 @@ uint16_t vl53l1x_read(vl53l1x_t *v, uint8_t blocking)
 
    vl53l1x_getRangingData(v);
 
-   ESP_LOGI(TAG, "VL53L1X read: range_status=%u raw_range=%u range_mm=%u stream_count=%u",
-            v->results.range_status,
-            v->results.final_crosstalk_corrected_range_mm_sd0,
-            v->ranging_data.range_mm,
-            v->results.stream_count);
+   // ESP_LOGI(TAG, "VL53L1X read: range_status=%u raw_range=%u range_mm=%u stream_count=%u",
+   //          v->results.range_status,
+   //          v->results.final_crosstalk_corrected_range_mm_sd0,
+   //          v->ranging_data.range_mm,
+   //          v->results.stream_count);
 
    vl53l1x_writeReg(v, SYSTEM__INTERRUPT_CLEAR, 0x01); // sys_interrupt_clear_range
    // printf("Range status: %s\n", vl53l1x_rangeStatusToString(v, v->ranging_data.range_status));

@@ -102,7 +102,7 @@ vl53l1x_t *sensorInit()
 
         vl53l1x_setDistanceMode(sensor, VL53L1X_Short); // Mode de distance
         vl53l1x_setMeasurementTimingBudget(sensor, 20000); // 20 ms au lieu des 50 ms par défaut
-        printf("Initialisation i2C ok\n");
+        // printf("Initialisation i2C ok\n");
         // j'avais mis 8*16 pourquoi je ne sais pas
         // vl53l1x_setROISize(sensor, 8, 16); // FOV partiel => 8*16
         vl53l1x_setROISize(sensor, 8, 8); // FOV complet => 16*16
@@ -112,7 +112,7 @@ vl53l1x_t *sensorInit()
         // Attendre que la première mesure soit disponible (~200ms pour mode Long)
         // vTaskDelay(pdMS_TO_TICKS(200));
 
-        printf("Configuration du capteur ok\n");
+        // printf("Configuration du capteur ok\n");
         ESP_LOGI(TAG, "✓ Capteur VL53L1X initialisé avec succès!\n");
         return sensor; // Retourne le capteur initialisé
     }
@@ -151,7 +151,7 @@ uint8_t people_counter(vl53l1x_t *sensor)
     detect1 = (confirm1 >= CONFIRM_THRESHOLD);
     detect2 = (confirm2 >= CONFIRM_THRESHOLD);
 
-    ESP_LOGI(TAG, "dist1: %d, dist2: %d, last_zone: %d, empty_count: %d", dist1, dist2, last_zone, empty_count);
+    // ESP_LOGI(TAG, "dist1: %d, dist2: %d, last_zone: %d, empty_count: %d", dist1, dist2, last_zone, empty_count);
 
     // Détection de passage
     if (detect1 && !detect2 && last_zone == ZONE_0)
@@ -162,7 +162,7 @@ uint8_t people_counter(vl53l1x_t *sensor)
     else if (detect2 && !detect1 && last_zone == ZONE_1)
     {
         counter++;
-        ESP_LOGI(TAG, "Passage zone1 -> zone2, compteur: %d", counter);
+        // ESP_LOGI(TAG, "Passage zone1 -> zone2, compteur: %d", counter);
         last_zone = ZONE_2;
         empty_count = 0;
     }
@@ -176,7 +176,7 @@ uint8_t people_counter(vl53l1x_t *sensor)
         if (counter > 0)
         {
             counter--;
-            ESP_LOGI(TAG, "Passage zone2 -> zone1, compteur: %d", counter);
+            // ESP_LOGI(TAG, "Passage zone2 -> zone1, compteur: %d", counter);
         }
         last_zone = ZONE_1;
         empty_count = 0;
@@ -195,7 +195,7 @@ uint8_t people_counter(vl53l1x_t *sensor)
         empty_count = 0; // les deux zones détectent en même temps : cas ambigu, on reset juste le compteur de silence
     }
 
-    printf("counter: %d\n", counter);
+    // // printf("counter: %d\n", counter);
     return counter;
 }
 void RTOS_task(void *pvParameters)
@@ -214,7 +214,7 @@ void RTOS_task(void *pvParameters)
 
         if (peopleCounter != lastPeopleCount)
         {
-            ESP_LOGI(TAG, "Nombre de personnes détectées: %d", peopleCounter);
+            //ESP_LOGI(TAG, "Nombre de personnes détectées: %d", peopleCounter);
             lastPeopleCount = peopleCounter;
         }
 
