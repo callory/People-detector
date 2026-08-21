@@ -1,0 +1,53 @@
+# === VSCode ===
+.vscode/
+*.code-workspace
+
+# === Build / compilation ===
+build/
+bin/
+obj/
+Debug/
+Release/
+*.o
+*.obj
+*.elf
+*.bin
+*.hex
+*.map
+*.d
+*.a
+*.so
+*.dll
+*.exe
+
+# === ESP-IDF ===
+managed_components/
+sdkconfig
+sdkconfig.old
+dependencies.lock
+
+
+# === CMake ===
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# === Logs et fichiers temporaires ===
+*.log
+*.tmp
+*.bak
+*.swp
+*~
+
+# === Système d'exploitation ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === Fichiers sensibles / config locale ===
+.env
+*.pem
+*.key
+secrets.h
+config_local.h
