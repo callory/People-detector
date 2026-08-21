@@ -1,3 +1,10 @@
-idf_component_register(SRCS "vl53l0x.c" "i2ctools_example_main.c"
-                            "cmd_i2ctools.c"
-                       INCLUDE_DIRS ".")
+idf_component_register(SRCS 
+   "main.c"
+
+   "esp_zb_light.c"
+   "people_counter.c" 
+   "vl53l1x.c" 
+                         
+   "cmd_i2ctools.c"
+   INCLUDE_DIRS "."
+)

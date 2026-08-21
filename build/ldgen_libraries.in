@@ -83,4 +83,5 @@ $<TARGET_FILE:__idf_wifi_provisioning>
 $<TARGET_FILE:__idf_cmd_nvs>
 $<TARGET_FILE:__idf_cmd_system>
 $<TARGET_FILE:__idf_cmd_wifi>
+$<TARGET_FILE:__idf_espressif__led_strip>
 $<TARGET_FILE:__idf_main>

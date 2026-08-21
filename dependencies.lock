@@ -17,6 +17,37 @@ dependencies:
       path: C:\Users\coran\esp\v5.3.1\esp-idf\examples\system\console\advanced\components\cmd_wifi
       type: local
     version: '*'
+  espressif/esp-zboss-lib:
+    component_hash: 321883d142421f65009972408287441794250057668a11abbdfd8bec77c3309a
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=5.0'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 1.6.4
+  espressif/esp-zigbee-lib:
+    component_hash: 947ea40aa95a89b9da238e941bd2950952e7cd422074d0c02d6896e2ff07bad5
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=5.0'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 1.6.5
+  espressif/led_strip:
+    component_hash: 7e92a0c8a2e35b40904f88e88ce3c0dffff504a2763f70fba7ef4787cf2eec83
+    dependencies:
+    - name: idf
+      registry_url: https://components.espressif.com
+      require: private
+      version: '>=5.0'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 2.0.0
   idf:
     source:
       type: idf
@@ -25,6 +56,10 @@ direct_dependencies:
 - cmd_nvs
 - cmd_system
 - cmd_wifi
-manifest_hash: 6d54c5e451ccd396bf1c0136ca6744e4f31c8b91775ca1b87d7790cd9f317199
+- espressif/esp-zboss-lib
+- espressif/esp-zigbee-lib
+- espressif/led_strip
+- idf
+manifest_hash: c1228b8705148edafeefade886607b32dc6d5fcd61b3ff2db1cf293acf00f2c7
 target: esp32c6
 version: 2.0.0
