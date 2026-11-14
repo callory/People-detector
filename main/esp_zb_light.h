@@ -1,4 +1,3 @@
-
 #ifndef ESP_ZB_LIGHT_H
 #define ESP_ZB_LIGHT_H
 

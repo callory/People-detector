@@ -12,7 +12,7 @@ static const char __attribute__((unused)) TAG[] = "ranger";
 #define TIMEOUT (10 / portTICK_PERIOD_MS) // I2C command timeout
 
 #ifdef CONFIG_VL53L1X_DEBUG
-#define VL53L1X_LOG ESP_LOGI // Set to allow I2C logging
+// #define VL53L1X_LOG ESP_LOGI // Set to allow I2C logging
 #endif
 
 #ifndef VL53L1X_LOG
@@ -1594,12 +1594,12 @@ vl53l1x_t *vl53l1x_config(int8_t port, int8_t scl, int8_t sda, int8_t xshut, uin
    esp_err_t err = i2c_driver_install(port, I2C_MODE_MASTER, 0, 0, 0);
    if (err != ESP_OK && err != ESP_ERR_INVALID_STATE)
    {
-      printf("VL53L1X: i2c_driver_install failed: %s\n", esp_err_to_name(err));
+      // printf("VL53L1X: i2c_driver_install failed: %s\n", esp_err_to_name(err));
       return NULL;
    }
    if (err == ESP_ERR_INVALID_STATE)
    {
-      printf("VL53L1X: I2C driver already installed on port %d\n", port);
+      // printf("VL53L1X: I2C driver already installed on port %d\n", port);
    }
    i2c_config_t config = {
        .mode = I2C_MODE_MASTER,
@@ -1612,7 +1612,7 @@ vl53l1x_t *vl53l1x_config(int8_t port, int8_t scl, int8_t sda, int8_t xshut, uin
    if (i2c_param_config(port, &config))
    { // Config failed
       i2c_driver_delete(port);
-      printf("VL53L1X: I2C param config failed on port %d\n", port);
+      // printf("VL53L1X: I2C param config failed on port %d\n", port);
       return NULL;
    }
    i2c_set_timeout(port, 20); // Clock stretching timeout (in I2C clock cycles)
@@ -1637,9 +1637,9 @@ vl53l1x_t *vl53l1x_config(int8_t port, int8_t scl, int8_t sda, int8_t xshut, uin
    v->port = port;
    v->address = address;
    v->io_timeout = 100;
-   printf("VL53L1X: I2C port %d, SCL %d, SDA %d, XSHUT %d, address 0x%02X, 2V8 mode %s\n",
-          port, scl, sda, xshut, address,
-          io_2v8 ? "enabled" : "disabled");
+   // printf("VL53L1X: I2C port %d, SCL %d, SDA %d, XSHUT %d, address 0x%02X, 2V8 mode %s\n",
+         //  port, scl, sda, xshut, address,
+         //  io_2v8 ? "enabled" : "disabled");
    return v;
 }
 
@@ -1656,7 +1656,7 @@ const char *vl53l1x_init(vl53l1x_t *v)
    // check model ID and module type registers (values specified in datasheet)
    if (toto != 0xEACC)
    {
-      printf("VL53L1X: Bad model ID: %04X\n", toto);
+      // printf("VL53L1X: Bad model ID: %04X\n", toto);
       return "Not VL53L1X";
    }
 
@@ -1679,7 +1679,7 @@ const char *vl53l1x_init(vl53l1x_t *v)
       if (vl53l1x_checkTimeoutExpired(v))
       {
          v->did_timeout = true;
-         printf("VL53L1X: Timeout waiting for boot completion\n");
+         // printf("VL53L1X: Timeout waiting for boot completion\n");
          return "Timeout";
       }
    }
@@ -1776,7 +1776,7 @@ const char *vl53l1x_init(vl53l1x_t *v)
    {
       if (vl53l1x_checkTimeoutExpired(v))
       {
-         printf("Timeout attente mesure de calibration\n");
+         // printf("Timeout attente mesure de calibration\n");
          return "Timeout calibration";
       }
    }
@@ -1790,7 +1790,7 @@ const char *vl53l1x_init(vl53l1x_t *v)
    // the API triggers this change in VL53L1_init_and_start_range() once a
    // measurement is started; assumes MM1 and MM2 are disabled
    vl53l1x_writeReg16Bit(v, ALGO__PART_TO_PART_RANGE_OFFSET_MM, vl53l1x_readReg16Bit(v, MM_CONFIG__OUTER_OFFSET_MM) * 4);
-   printf("initialisation = NULL");
+   // printf("initialisation = NULL");
    return NULL;
 }
 

@@ -23,11 +23,17 @@ case_e last_zone = ZONE_0;
 #define VL53L0X_REG_RESULT 0x14 // Registre de lecture des données
 #define VL53L0X_REG_START 0x00  // Registre de démarrage du capteur
 
+#define IDLE_PERIOD_MS 100   // période de veille
+#define IDLE_TRIGGER_MM 1200 // seuil de réveil
+#define ACTIVE_HOLD_MS 3000  // durée sans personne avant retour en veille
+
 static const char *TAG = "VL53L1X";
+static bool s_active = false;
+static TickType_t s_last_seen = 0;
 
 void i2c_scan(void)
 {
-    printf("Scan I2C en cours...\n");
+    // printf("Scan I2C en cours...\n");
 
     for (uint8_t addr = 0x08; addr < 0x78; addr++)
     {
@@ -42,12 +48,12 @@ void i2c_scan(void)
 
         if (ret == ESP_OK)
         {
-            printf("   → Périphérique trouvé à l'adresse 0x%02X\n", addr);
+            // printf("   → Périphérique trouvé à l'adresse 0x%02X\n", addr);
             break;
         }
     }
 
-    printf("Scan terminé.\n");
+    // printf("Scan terminé.\n");
 }
 
 vl53l1x_t *sensorInit()
@@ -100,7 +106,7 @@ vl53l1x_t *sensorInit()
         // vl53l1x_startContinuous(sensor, 25); // 0 pour un mode continu sans délai entre les mesures
         ESP_LOGI(TAG, "Mode continu démarré");
 
-        vl53l1x_setDistanceMode(sensor, VL53L1X_Short); // Mode de distance
+        vl53l1x_setDistanceMode(sensor, VL53L1X_Short);    // Mode de distance
         vl53l1x_setMeasurementTimingBudget(sensor, 20000); // 20 ms au lieu des 50 ms par défaut
         // printf("Initialisation i2C ok\n");
         // j'avais mis 8*16 pourquoi je ne sais pas
@@ -121,10 +127,10 @@ uint8_t people_counter(vl53l1x_t *sensor)
 {
     static const char *TAG = "VL53L1X";
     static uint8_t empty_count = 0;
-    static uint8_t confirm1 = 0, confirm2 = 0;   // Compteurs de confirmation par zone
-    uint8_t center[2] = {167, 223};              // Centres ROI zone1 / zone2
-    static uint8_t counter = 0;                  // Compteur de passages
-    const uint8_t CONFIRM_THRESHOLD = 2;         // Nb de mesures consécutives requises (~100ms à 50ms/cycle)
+    static uint8_t confirm1 = 0, confirm2 = 0; // Compteurs de confirmation par zone
+    uint8_t center[2] = {167, 223};            // Centres ROI zone1 / zone2
+    static uint8_t counter = 0;                // Compteur de passages
+    const uint8_t CONFIRM_THRESHOLD = 2;       // Nb de mesures consécutives requises (~100ms à 50ms/cycle)
 
     bool detect1 = false;
     bool detect2 = false;
@@ -210,22 +216,47 @@ void RTOS_task(void *pvParameters)
 
     while (1)
     {
+
+        if (!s_active)
+        {
+            // vl53l1x_setROISize(sensor, 16, 16); // champ large, centre 199
+            uint16_t d = vl53l1x_readSingle(sensor, true);
+            if (d > 0 && d <= IDLE_TRIGGER_MM)
+            {
+                s_active = true;
+                s_last_seen = xTaskGetTickCount();
+                vl53l1x_setROISize(sensor, 8, 8); // retour à ton mode 2 zones
+                xLastWakeTime = xTaskGetTickCount();
+            }
+            else
+            {
+                vTaskDelay(pdMS_TO_TICKS(IDLE_PERIOD_MS)); // ici l'ESP peut dormir
+                continue;
+            }
+        }
+
         uint16_t peopleCounter = people_counter(sensor) * 100;
 
         if (peopleCounter != lastPeopleCount)
         {
-            //ESP_LOGI(TAG, "Nombre de personnes détectées: %d", peopleCounter);
+            // ESP_LOGI(TAG, "Nombre de personnes détectées: %d", peopleCounter);
             lastPeopleCount = peopleCounter;
         }
 
         TickType_t now = xTaskGetTickCount();
         if (peopleCounter != lastReportedCount && (now - lastReportTime) >= reportMinInterval)
         {
-           reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT, ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID, &peopleCounter, 2);
+            reportAttribute(HA_ESP_LIGHT_ENDPOINT, ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT, ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID, &peopleCounter, 2);
             lastReportedCount = peopleCounter;
             lastReportTime = now;
         }
-
+        if (last_zone != ZONE_0)
+            s_last_seen = xTaskGetTickCount();
+        else if ((xTaskGetTickCount() - s_last_seen) > pdMS_TO_TICKS(ACTIVE_HOLD_MS))
+        {
+            s_active = false;
+            vl53l1x_setROISize(sensor, 16, 16); // une seule fois
+        }
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
 }

@@ -154,6 +154,9 @@ void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct)
             // xTaskCreate(RTOS_task, "people_counter_task", 8192, sensor, 1, NULL); // Création de la tâche pour le comptage de personnes
         }
         break;
+    case ESP_ZB_COMMON_SIGNAL_CAN_SLEEP: // <-- à ajouter ici
+        esp_zb_sleep_now();
+        break;
     default:
         ESP_LOGI(TAG, "ZDO signal: %s (0x%x), status: %s", esp_zb_zdo_signal_to_string(sig_type), sig_type,
                  esp_err_to_name(err_status));
@@ -226,7 +229,8 @@ void esp_zb_task(void *pvParameters)
 
     esp_zb_core_action_handler_register(zb_action_handler);
     esp_zb_set_primary_network_channel_set(ESP_ZB_PRIMARY_CHANNEL_MASK);
-
+    // Enable Zigbee sleep mode
+    esp_zb_sleep_enable(true);
     ESP_ERROR_CHECK(esp_zb_start(false));
     esp_zb_stack_main_loop(); // envoie tout le tps
 }
