@@ -24,7 +24,7 @@ case_e last_zone = ZONE_0;
 #define VL53L0X_REG_RESULT 0x14 // Registre de lecture des données
 #define VL53L0X_REG_START 0x00  // Registre de démarrage du capteur
 
-#define IDLE_PERIOD_MS 100   // période de veille
+#define IDLE_PERIOD_MS 2000   // période de veille
 #define IDLE_TRIGGER_MM 1200 // seuil de réveil
 #define ACTIVE_HOLD_MS 3000  // durée sans personne avant retour en veille
 
