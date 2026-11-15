@@ -122,8 +122,9 @@ void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct)
         if (err_status == ESP_OK)
         {
             ESP_LOGI(TAG, "Network steering was successful");
+            pm_nosleep_acquire();
             sensor = sensorInit(); // Initialize the VL53L1X sensor
-
+            pm_nosleep_release();
             if (sensor == NULL)
             {
                 ESP_LOGE(TAG, "VL53L1X sensor not initialized");

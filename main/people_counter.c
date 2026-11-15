@@ -9,6 +9,7 @@
 #include "ha/esp_zigbee_ha_standard.h"
 #include "esp_zb_light.h"
 #include "driver/i2c.h"
+#include "esp_pm.h"
 
 #define MEASURE_INTERVAL_MS 50 // Intervalle de mesure en millisecondes
 case_e last_zone = ZONE_0;
@@ -30,6 +31,23 @@ case_e last_zone = ZONE_0;
 static const char *TAG = "VL53L1X";
 static bool s_active = false;
 static TickType_t s_last_seen = 0;
+static esp_pm_lock_handle_t s_nosleep = NULL;
+
+void pm_nosleep_acquire(void)
+{
+    if (!s_nosleep)
+    {
+        esp_pm_lock_create(ESP_PM_NO_LIGHT_SLEEP, 0, "sensor", &s_nosleep);
+    }
+    esp_pm_lock_acquire(s_nosleep);
+}
+void pm_nosleep_release(void)
+{
+    if (s_nosleep)
+    {
+        esp_pm_lock_release(s_nosleep);
+    }
+}
 
 void i2c_scan(void)
 {
